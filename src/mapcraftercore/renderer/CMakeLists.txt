@@ -1,10 +1,12 @@
 set(SOURCE
     ${SOURCE}
     "${CMAKE_CURRENT_SOURCE_DIR}/biomes.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/blockatlas.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/blockimages.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/blocktextures.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/manager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mcrandom.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/rendermode.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderview.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/textureimage.cpp"
@@ -16,10 +18,12 @@ set(SOURCE
 set(HEADERS
     ${HEADERS}
     "${CMAKE_CURRENT_SOURCE_DIR}/biomes.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/blockatlas.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/blockimages.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/blocktextures.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/image.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/manager.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mcrandom.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/rendermode.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderview.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/textureimage.h"

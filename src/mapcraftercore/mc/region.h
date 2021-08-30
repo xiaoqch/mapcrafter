@@ -53,7 +53,7 @@ public:
 	/**
 	 * Sets the rotation of the world. You have to call this before loading a world.
 	 */
-	void setRotation(int rotation);
+	// void setRotation(int rotation);
 
 	/**
 	 * Sets the boundaries of the world.
@@ -140,7 +140,7 @@ private:
 	RegionPos regionpos, regionpos_original;
 
 	// rotation of the region file
-	int rotation;
+	// int rotation;
 	// and possible boundaries of the world
 	WorldCrop world_crop;
 
@@ -152,7 +152,7 @@ private:
 
 	// available chunks also as array
 	bool chunk_exists[1024];
-	
+
 	// timestamps of the chunks
 	uint32_t chunk_timestamps[1024];
 

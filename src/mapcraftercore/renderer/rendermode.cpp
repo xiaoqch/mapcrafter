@@ -48,7 +48,7 @@ BaseRenderMode::BaseRenderMode()
 BaseRenderMode::~BaseRenderMode() {
 }
 
-void BaseRenderMode::initialize(const RenderView* render_view, 
+void BaseRenderMode::initialize(const RenderView* render_view,
 		BlockImages* images, mc::WorldCache* world, mc::Chunk** current_chunk) {
 	this->images = images;
 	this->block_images = dynamic_cast<RenderedBlockImages*>(images);
@@ -83,7 +83,7 @@ void MultiplexingRenderMode::addRenderMode(RenderMode* render_mode) {
 	render_modes.push_back(render_mode);
 }
 
-void MultiplexingRenderMode::initialize(const RenderView* render_view, 
+void MultiplexingRenderMode::initialize(const RenderView* render_view,
 		BlockImages* images, mc::WorldCache* world, mc::Chunk** current_chunk) {
 	for (auto it = render_modes.begin(); it != render_modes.end(); ++it)
 		(*it)->initialize(render_view, images, world, current_chunk);
@@ -142,7 +142,7 @@ RenderMode* createRenderMode(const config::WorldSection& world_config,
 	RenderModeType type = map_config.getRenderMode();
 	OverlayType overlay = map_config.getOverlay();
 	MultiplexingRenderMode* render_mode = new MultiplexingRenderMode();
-	
+
 	// create render mode
 	if (type == RenderModeType::PLAIN) {
 		// nothing
@@ -172,7 +172,7 @@ RenderMode* createRenderMode(const config::WorldSection& world_config,
 		assert(false);
 		return nullptr;
 	}
-	
+
 	// create overlay
 	if (overlay == OverlayType::NONE) {
 		// nothing

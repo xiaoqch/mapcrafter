@@ -64,7 +64,6 @@ public:
 	virtual ~TileRenderer();
 
 	void setRenderBiomes(bool render_biomes);
-	void setUsePreblitWater(bool use_preblit_water);
 	void setShadowEdges(std::array<uint8_t, 5> shadow_edges);
 
 	virtual void renderTile(const TilePos& tile_pos, RGBAImage& tile);
@@ -90,23 +89,17 @@ protected:
 	RenderMode* render_mode;
 
 	bool render_biomes;
-	bool use_preblit_water;
 	// factors for shadow edges:
 	// north, south, east, west, bottom
 	std::array<uint8_t, 5> shadow_edges;
 
 	// IDs of full water blocks appearing in minecraft worlds
-	std::set<uint16_t> full_water_ids;
+	// std::set<uint16_t> full_water_ids;
 	// IDs of blocks that can be seen as full water blocks for other full water blocks
 	// (for example ice: we don't want side faces of water next to ice)
-	std::set<uint16_t> full_water_like_ids;
+	// std::set<uint16_t> full_water_like_ids;
 	// full water blocks will be replaced by these water blocks
-	std::vector<uint16_t> partial_full_water_ids, partial_ice_ids;
-
-	std::vector<uint16_t> lily_pad_ids;
-
-	uint16_t waterlog_id;
-	const BlockImage* waterlog_block_image;
+	// std::vector<uint16_t> partial_full_water_ids;
 };
 
 }

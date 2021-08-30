@@ -76,12 +76,12 @@ bool World::readRegions(const fs::path& region_dir) {
 		int z = 0;
 		if(sscanf(filename.c_str(), "r.%d.%d.mca", &x, &z) != 2)
 			continue;
-		RegionPos pos(x, z);
+		RegionPos pos(x, z, 0);
 		// check if we should not crop this region
 		if (!world_crop.isRegionContained(pos))
 			continue;
-		if (rotation)
-			pos.rotate(rotation);
+		// if (rotation)
+			// pos.rotate(rotation);
 		available_regions.insert(pos);
 		region_files[pos] = it->path().string();
 	}
@@ -155,7 +155,6 @@ bool World::getRegion(const RegionPos& pos, RegionFile& region) const {
 	if (it == region_files.end())
 		return false;
 	region = RegionFile(it->second);
-	region.setRotation(rotation);
 	region.setWorldCrop(world_crop);
 	return true;
 }

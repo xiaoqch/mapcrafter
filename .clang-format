@@ -1,0 +1,40 @@
+# https://zed0.co.uk/clang-format-configurator/
+---
+BasedOnStyle: Chromium
+IndentWidth: '4'
+TabWidth: '4'
+UseTab: Never
+ReflowComments: 'true'
+SortIncludes: 'true'
+PointerAlignment: 'Left'
+BreakInheritanceList: 'BeforeComma'
+
+---
+Language: Cpp
+AlignConsecutiveAssignments: 'true'
+AlignEscapedNewlines: Left
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: Inline
+AllowShortLoopsOnASingleLine: 'true'
+ColumnLimit: '110'
+FixNamespaceComments: 'true'
+IncludeBlocks: Regroup
+UseTab: ForContinuationAndIndentation
+NamespaceIndentation: 'None'
+MaxEmptyLinesToKeep: '1'
+KeepEmptyLinesAtTheStartOfBlocks: 'false'
+IndentWrappedFunctionNames: 'true'
+ExperimentalAutoDetectBinPacking: 'true'
+ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
+BreakConstructorInitializers: 'BeforeComma'
+BreakBeforeTernaryOperators: 'true'
+AlignAfterOpenBracket: 'AlwaysBreak'
+AlignConsecutiveDeclarations: 'true'
+AllowAllArgumentsOnNextLine: 'true'
+AllowAllConstructorInitializersOnNextLine: 'true'
+AllowAllParametersOfDeclarationOnNextLine: 'true'
+BinPackParameters: 'false'
+AccessModifierOffset: '-2'
+
+...

@@ -36,12 +36,15 @@
 namespace mapcrafter {
 namespace mc {
 
+const int CHUNK_Y_LOWEST = -4;
+
 class RegionPos {
 public:
-	int x, z;
+	int x, z, y;
+	int org_x, org_z;
 
 	RegionPos();
-	RegionPos(int x, int z);
+	RegionPos(int x, int z, int y);
 
 	bool operator==(const RegionPos& other) const;
 	bool operator!=(const RegionPos& other) const;
@@ -56,13 +59,15 @@ class BlockPos;
 
 class ChunkPos {
 public:
-	int x, z;
+	int x, z, y;
+	int org_x, org_z;
 
 	ChunkPos();
-	ChunkPos(int x, int z);
+	ChunkPos(int x, int z, int y);
 	ChunkPos(const BlockPos& block);
 
 	int getLocalX() const;
+	int getLocalY() const;
 	int getLocalZ() const;
 
 	RegionPos getRegion() const;
@@ -73,7 +78,7 @@ public:
 
 	int getRow() const;
 	int getCol() const;
-	static ChunkPos byRowCol(int row, int col);
+	static ChunkPos byRowCol(int row, int col, int height);
 
 	void rotate(int count);
 };
@@ -114,6 +119,9 @@ public:
 	int getCol() const;
 
 	BlockPos toGlobalPos(const ChunkPos& chunk) const;
+
+	LocalBlockPos& above() const;
+	LocalBlockPos& below() const;
 
 	bool operator<(const LocalBlockPos& other) const;
 };

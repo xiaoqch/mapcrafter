@@ -155,7 +155,7 @@ public:
 	RGBAImage rotate(int rotation) const;
 	RGBAImage flip(bool flip_x, bool flip_y) const;
 	RGBAImage move(int x_off, int y_off) const;
-	
+
 	void resize(RGBAImage& dest, int width, int height,
 			InterpolationType interpolation = InterpolationType::AUTO) const;
 
@@ -239,9 +239,11 @@ Pixel& Image<Pixel>::pixel(int x, int y) {
 
 template <typename Pixel>
 void Image<Pixel>::setSize(int width, int height) {
-	this->width = width;
-	this->height = height;
-	data.resize(width * height);
+	if ((width!=this->width) || (height!=this->height)) {
+		this->width = width;
+		this->height = height;
+		data.resize(width * height);
+	}
 }
 
 }

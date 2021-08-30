@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 2.6)
 project(mapcrafter)
 
 option(OPT_DEBUG "Sets debug compiler flags" OFF)
@@ -10,6 +9,9 @@ option(OPT_LINK_DEPS_STATICALLY "Links all dependencies (libpng, libjpeg, boost.
 option(OPT_LINK_BOOST_STATICALLY "Links boost statically" OFF)
 option(OPT_BOOST_STATIC "Links boost statically (deprecated, use OPT_LINK_BOOST_STATICALLY)" OFF)
 option(OPT_INSTALL_HEADERS "Installs libmapcraftercore header files" ON)
+
+set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 
 if(OPT_BOOST_STATIC)
     set(OPT_LINK_BOOST_STATICALLY ON)
@@ -25,6 +27,8 @@ else()
 endif()
 if(OPT_OPTIMIZE)
     add_definitions(-O3)
+else()
+    add_definitions(-O0)
 endif()
 if(OPT_PROFILE)
     add_definitions(-pg)

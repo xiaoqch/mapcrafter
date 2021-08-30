@@ -53,10 +53,23 @@ std::ostream& operator<<(std::ostream& out, Dimension dimension);
  * This just assumes that there are maximal 8096 regions on x/z axis, this are
  * all in all 8096^2=67108864 regions. I think this should be enough for now.
  */
-// TODO maybe a better, not so trivial hash function?
-struct hash_function {
+// This is the algorythm used by the Minecraft 1.18.1 engine itself to hash chunk coordinates
+struct hash_function_chunk {
+	long operator()(const ChunkPos& chunk) const {
+		long hash = 0L;
+		hash |= ((long)chunk.x & 0x3FFFFF) << 42;
+		hash |= ((long)chunk.y & 0x0FFFFF) << 0;
+		hash |= ((long)chunk.z & 0x3FFFFF) << 20;
+		return hash;
+	}
+};
+struct hash_function_region {
 	long operator()(const RegionPos& region) const {
-		return (region.x+4096) * 2048 + region.z + 4096;
+		long hash = 0L;
+		hash |= ((long)region.x & 0x3FFFFF) << 42;
+		hash |= ((long)region.y & 0x0FFFFF) << 0;
+		hash |= ((long)region.z & 0x3FFFFF) << 20;
+		return hash;
 	}
 };
 
@@ -68,8 +81,9 @@ struct hash_function {
  */
 class World {
 public:
-	typedef std::unordered_set<RegionPos, hash_function> RegionSet;
-	typedef std::unordered_map<RegionPos, std::string, hash_function> RegionMap;
+	typedef std::unordered_set<ChunkPos, hash_function_chunk> ChunkSet;
+	typedef std::unordered_set<RegionPos, hash_function_region> RegionSet;
+	typedef std::unordered_map<RegionPos, std::string, hash_function_region> RegionMap;
 
 	/**
 	 * Constructor. You should specify a world directory and you can specify a dimension
@@ -170,6 +184,8 @@ private:
 	RegionSet available_regions;
 	// (hash-) map containing positions of available region files and their file paths
 	RegionMap region_files;
+	// (hash-) set containing positions of available chunks
+	ChunkSet available_chunks;
 
 	/**
 	 * Scans a directory for Anvil *.mca region files and adds them to the available

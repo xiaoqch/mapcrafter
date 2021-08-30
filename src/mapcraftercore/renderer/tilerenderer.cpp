@@ -23,6 +23,7 @@
 #include "rendermode.h"
 #include "renderview.h"
 #include "tileset.h"
+#include "mcrandom.h"
 #include "../mc/blockstate.h"
 #include "../mc/pos.h"
 #include "../util.h"
@@ -42,56 +43,9 @@ TileRenderer::TileRenderer(const RenderView* render_view, mc::BlockStateRegistry
 	: block_registry(block_registry), images(images), block_images(dynamic_cast<RenderedBlockImages*>(images)),
 	  tile_width(tile_width), world(world), current_chunk(nullptr),
 	  render_mode(render_mode),
-	  render_biomes(true), use_preblit_water(false), shadow_edges({0, 0, 0, 0, 0}) {
+	  render_biomes(true), shadow_edges({0, 0, 0, 0, 0}) {
 	assert(block_images);
 	render_mode->initialize(render_view, images, world, &current_chunk);
-
-	// TODO can we make this somehow less hardcoded?
-	full_water_ids.insert(block_registry.getBlockID(mc::BlockState::parse("minecraft:water", "level=0")));
-	full_water_ids.insert(block_registry.getBlockID(mc::BlockState::parse("minecraft:water", "level=8")));
-	full_water_like_ids.insert(block_registry.getBlockID(mc::BlockState::parse("minecraft:ice", "")));
-	full_water_like_ids.insert(block_registry.getBlockID(mc::BlockState::parse("minecraft:packed_ice", "")));
-
-	for (uint8_t i = 0; i < 8; i++) {
-		bool up = i & 0x1;
-		bool south = i & 0x2;
-		bool west = i & 0x4;
-
-		mc::BlockState block("minecraft:full_water");
-		block.setProperty("up", up ? "true" : "false");
-		block.setProperty("south", south ? "true" : "false");
-		block.setProperty("west", west ? "true" : "false");
-		partial_full_water_ids.push_back(block_registry.getBlockID(block));
-	}
-
-	for (uint16_t i = 0; i < 4; i++) {
-		mc::BlockState block("minecraft:lily_pad_rotated");
-		block.setProperty("rotation", util::str(i));
-		lily_pad_ids.push_back(block_registry.getBlockID(block));
-	}
-
-	/*
-	for (uint8_t i = 0; i < 64; i++) {
-		bool north = i & 0x1;
-		bool south = i & 0x2;
-		bool east = i & 0x4;
-		bool west = i & 0x8;
-		bool up = i & 0x10;
-		bool down = i & 0x20;
-
-		mc::BlockState block("minecraft:full_ice");
-		block.setProperty("north", north ? "true" : "false");
-		block.setProperty("south", south ? "true" : "false");
-		block.setProperty("east", east ? "true" : "false");
-		block.setProperty("west", west ? "true" : "false");
-		block.setProperty("up", up ? "true" : "false");
-		block.setProperty("down", down ? "true" : "false");
-		partial_ice_ids.push_back(block_registry.getBlockID(block));
-	}
-	*/
-
-	waterlog_id = block_registry.getBlockID(mc::BlockState("minecraft:waterlog"));
-	waterlog_block_image = &block_images->getBlockImage(waterlog_id);
 }
 
 TileRenderer::~TileRenderer() {
@@ -99,10 +53,6 @@ TileRenderer::~TileRenderer() {
 
 void TileRenderer::setRenderBiomes(bool render_biomes) {
 	this->render_biomes = render_biomes;
-}
-
-void TileRenderer::setUsePreblitWater(bool use_preblit_water) {
-	this->use_preblit_water = use_preblit_water;
 }
 
 void TileRenderer::setShadowEdges(std::array<uint8_t, 5> shadow_edges) {
@@ -129,6 +79,23 @@ int TileRenderer::getTileHeight() const {
 }
 
 void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockPos& dir, std::set<TileImage>& tile_images) {
+	// const int water_id =
+	// 	block_registry.getBlockID(
+	// 		mc::BlockState("minecraft:water"));
+	// const BlockImage& waterlog_image =
+	// 	block_images->getBlockImage(
+	// 		block_registry.getBlockID(
+	// 			mc::BlockState::parse("minecraft:water_mask", "level=8")));
+	const BlockImage& waterlog_full_image =
+		block_images->getBlockImage(
+			block_registry.getBlockID(
+				mc::BlockState::parse("minecraft:water_mask", "level=7")));
+
+	// Pre-allocate rendering buffers
+	TileImage tile_image;
+	tile_image.image.setSize(waterlog_full_image.image().width, waterlog_full_image.image().height);
+	RGBAImage waterLogTinted(tile_image.image.width, tile_image.image.height);
+
 	for (; top.y >= mc::CHUNK_LOW*16 ; top += dir) {
 		// get current chunk position
 		mc::ChunkPos current_chunk_pos(top);
@@ -149,102 +116,90 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 
 		uint16_t id = current_chunk->getBlockID(local);
 		const BlockImage* block_image = &block_images->getBlockImage(id);
-		if (block_image->is_air || render_mode->isHidden(top, *block_image)) {
+
+		// Early rejection if nothing to draw
+		if ((block_image->is_empty && !block_image->is_waterlogged)
+			|| render_mode->isHidden(top, *block_image)) {
 			continue;
 		}
 
-		auto is_full_water = [this](uint16_t id) -> bool {
-			return full_water_ids.count(id)
-				|| full_water_like_ids.count(id)
-				|| block_images->getBlockImage(id).is_waterlogged;
+		// What's on each side ?
+		uint16_t id_top   = current_chunk->getBlockID(mc::LocalBlockPos(local.x,local.z,local.y+1));
+		uint16_t id_south = getBlock(top + mc::DIR_SOUTH).id;
+		uint16_t id_west  = getBlock(top + mc::DIR_WEST).id;
+		const BlockImage* block_image_top = &block_images->getBlockImage(id_top);
+		const BlockImage* block_image_south = &block_images->getBlockImage(id_south);
+		const BlockImage* block_image_west = &block_images->getBlockImage(id_west);
+
+		auto is_full_water = [](const BlockImage* b) -> bool {
+			return b->is_empty &&
+				b->is_waterlogged;
 		};
-		// auto is_ice = [this](uint16_t id) -> bool {
-		// 	return block_images->getBlockImage(id).is_ice;
-		// };
+		auto is_waterlogged = [](const BlockImage* b) -> bool {
+			return b->is_waterlogged;
+		};
 
-		if (full_water_ids.count(id)) {
-			uint16_t up = getBlock(top + mc::DIR_TOP).id;
-			uint16_t south = getBlock(top + mc::DIR_SOUTH).id;
-			uint16_t west = getBlock(top + mc::DIR_WEST).id;
+		bool water_top = is_waterlogged(block_image_top);
+		bool water_south = is_waterlogged(block_image_south);
+		bool water_west = is_waterlogged(block_image_west);
 
-			uint8_t index = is_full_water(up)
-								| (is_full_water(south) << 1)
-								| (is_full_water(west) << 2);
-			// skip water blocks that are completely empty
-			// (that commented thing hides the water surface)
-			if (index == 1+2+4 /*|| index % 2 == 0*/) {
-				continue;
-			}
-			assert(index < 8);
-			id = partial_full_water_ids[index];
-			block_image = &block_images->getBlockImage(id);
-		}
+		// Early rejection if water with waterloged with neighbours
+		if (is_full_water(block_image)
+			&& water_top
+			&& water_south
+			&& water_west)
+			continue;
 
-		if (block_image->is_lily_pad) {
-			// TODO this seems to be different than in Minecraft
-			// if anyone wants to fix this, go for it
-			long long pr = ((long long) top.x * 3129871LL) ^ ((long long) top.z * 116129781LL) ^ (long long)(top.y);
-			pr = pr * pr * 42317861LL + pr * 11LL;
-			uint16_t rotation = 3 & (pr >> 16);
-			id = lily_pad_ids[rotation];
-			block_image = &block_images->getBlockImage(id);
-		}
+		// Retrieve the image to print
+		// mc::BlockPos global_pos = mc::LocalBlockPos(local.x, local.z, local.y).toGlobalPos(current_chunk->getPos());
+		// MCRandom rnd(global_pos.x,global_pos.y,global_pos.z);
+		MCRandom rnd(local.x,local.y,local.z);
+		int alt = 0; // abs(rnd.nextLong());
+		const RGBAImage& image = block_image->image(alt);
+		const RGBAImage& uv_image = block_image->uv_image(alt);
 
-		// when we have a block that is waterlogged:
-		// remove upper water texture if it's not the block at the water surface
-		if (block_image->is_waterloggable && block_image->is_waterlogged) {
-			uint16_t up = getBlock(top + mc::DIR_TOP).id;
-			if (is_full_water(up)) {
-				id = block_image->non_waterlogged_id;
-				block_image = &block_images->getBlockImage(id);
-			}
-		}
+		// Prep the tile
+		tile_image.x = x;
+		tile_image.y = y;
+		tile_image.pos = top;
+		tile_image.z_index = 0;
+		tile_image.image.setSize(image.width,image.height);
 
-		auto addTileImage = [this, x, y, top, &tile_images](uint16_t id, const BlockImage& block_image, int z_index) {
-			TileImage tile_image;
-			tile_image.x = x;
-			tile_image.y = y;
-			tile_image.pos = top;
-			tile_image.z_index = z_index;
+		// Only display if there's something to print
+		// This applies for water blocks, where we print
+		// the water on the next step
+		if (!block_image->is_empty) {
 
-			// Check which side can be stripped, if any
-			// This is speeding up the rendering as it minimizes the amount of shadow and lighting that needs to be done
-			// 133 sec with stripping
-			// 144 without stripping
 			bool strip_up = false;
 			bool strip_left = false;
 			bool strip_right = false;
-			if(block_image.can_partial) {
-				strip_up = id == getBlock(top + mc::DIR_TOP).id;
-				strip_left = id == getBlock(top + mc::DIR_WEST).id;
-				strip_right = id == getBlock(top + mc::DIR_SOUTH).id;
-			} else if(!block_image.is_transparent) {
-				strip_up = block_images->getBlockImage((getBlock(top + mc::DIR_TOP).id)).is_transparent == false;
-				strip_left = block_images->getBlockImage((getBlock(top + mc::DIR_WEST).id)).is_transparent == false;
-				strip_right = block_images->getBlockImage((getBlock(top + mc::DIR_SOUTH).id)).is_transparent == false;
+			if (block_image->can_partial) {
+				strip_up    = id == id_top;
+				strip_right = id == id_south;
+				strip_left  = id == id_west;
+			} else if (!block_image->is_transparent) {
+				strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
+				strip_right = block_images->getBlockImage(id_south).is_transparent == false;
+				strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
 			}
 
-			tile_image.image.setSize(block_image.image.width,block_image.image.height);
-
-			if(strip_up || strip_left || strip_right){
-				const RGBAImage& uv = block_image.uv_image;
-				for(int i=0; i<tile_image.image.width*tile_image.image.height; i++)
-				{
-					RGBAPixel puv = uv.data[i];
-					RGBAPixel p = block_image.image.data[i];
-					switch(rgba_blue(puv)){
+			if (strip_up || strip_left || strip_right) {
+				for (int i=0; i<tile_image.image.width*tile_image.image.height; i++) {
+					RGBAPixel puv = uv_image.data[i];
+					RGBAPixel p = image.data[i];
+					switch(rgba_blue(puv)) {
 						case FACE_UP_INDEX:
-							if(strip_up) {
+							if (strip_up) {
 								p = 0;
 							}
 							break;
 						case FACE_LEFT_INDEX:
-							if(strip_left) {
+							if (strip_left) {
 								p = 0;
 							}
 							break;
 						case FACE_RIGHT_INDEX:
-							if(strip_right) {
+							if (strip_right) {
 								p = 0;
 							}
 							break;
@@ -252,55 +207,140 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 					tile_image.image.data[i] = p;
 				}
 			} else {
-				std::copy(block_image.image.data.begin(), block_image.image.data.end(), tile_image.image.data.begin());
+				std::copy(image.data.begin(), image.data.end(), tile_image.image.data.begin());
 			}
 
-			if (block_image.is_biome) {
-				block_images->prepareBiomeBlockImage(tile_image.image, block_image, getBiomeColor(top, block_image, current_chunk));
+			if (block_image->is_biome) {
+				block_images->prepareBiomeBlockImage(tile_image.image, *block_image, getBiomeColor(top, *block_image, current_chunk));
 			}
 
-			if (block_image.has_water_top) {
-				// get waterlog block image and biomize it
-				RGBAImage waterlog = waterlog_block_image->image;
-				const RGBAImage& waterlog_uv = waterlog_block_image->uv_image;
-				block_images->prepareBiomeBlockImage(waterlog, *waterlog_block_image, getBiomeColor(top, *waterlog_block_image, current_chunk));
+		} else {
+			// Clear out the tile from previous rendering
+			std::fill(tile_image.image.data.begin(), tile_image.image.data.end(), 0);
+		}
 
-				// blend waterlog water surface on top of block
-				blockImageBlendTop(tile_image.image, block_image.uv_image, waterlog, waterlog_uv);
+		if (block_image->is_waterlogged) {
+			assert( !(water_top && water_south && water_west) );
+
+			const RGBAImage* waterlog;
+			const RGBAImage* waterlog_uv;
+			if (water_top) {
+				// This will be displayed as full water
+				waterlog = &waterlog_full_image.image();
+				waterlog_uv = &waterlog_full_image.uv_image();
+			} else {
+				std::string level = "6"; //block_registry.getBlockState(id).getProperty("level", "4");
+				const BlockImage& waterlog_image =
+					block_images->getBlockImage(
+						block_registry.getBlockID(
+							mc::BlockState::parse("minecraft:water_mask", std::string("level=")+level )));
+				// That one will be displayed a bit lower to look like a shore line
+				waterlog = &waterlog_image.image();
+				waterlog_uv = &waterlog_image.uv_image();
 			}
 
-			if (block_image.shadow_edges > 0) {
-				auto shadow_edge = [this, top](const mc::BlockPos& dir) {
-					const BlockImage& b = block_images->getBlockImage(getBlock(top + dir).id);
-					//return b.is_transparent && !(b.is_full_water || b.is_waterlogged);
-					return b.shadow_edges == 0;
-				};
-				uint8_t north = shadow_edges[0] && shadow_edge(mc::DIR_NORTH);
-				uint8_t south = shadow_edges[1] && shadow_edge(mc::DIR_SOUTH);
-				uint8_t east = shadow_edges[2] && shadow_edge(mc::DIR_EAST);
-				uint8_t west = shadow_edges[3] && shadow_edge(mc::DIR_WEST);
-				uint8_t bottom = shadow_edges[4] && shadow_edge(mc::DIR_BOTTOM);
+			uint32_t biome_color = getBiomeColor(top, waterlog_full_image, current_chunk);
+			// biome_color = rgba( rgba_alpha(biome_color)>>2, rgba_red(biome_color), rgba_green(biome_color), rgba_blue(biome_color));
 
-				if (north + south + east + west + bottom != 0) {
-					int f = block_image.shadow_edges;
-					north *= shadow_edges[0] * f;
-					south *= shadow_edges[1] * f;
-					east *= shadow_edges[2] * f;
-					west *= shadow_edges[3] * f;
-					bottom *= shadow_edges[4] * f;
-					blockImageShadowEdges(tile_image.image, block_image.uv_image,
-							north, south, east, west, bottom);
+			std::vector<RGBAPixel>::const_iterator pit      = waterlog->data.begin();
+			std::vector<RGBAPixel>::const_iterator pitend   = waterlog->data.end();
+			std::vector<RGBAPixel>::const_iterator puvit    = waterlog_uv->data.begin();
+			// std::vector<RGBAPixel>::const_iterator pimguvit = uv_image.data.begin();
+			std::vector<RGBAPixel>::iterator pdestit        = waterLogTinted.data.begin();
+
+			// if ((water_top || water_south || water_west) == false) {
+			// 	// fast lane
+			// 	// Nothing to clip, just render the whole water block with biome color
+			// 	while (pit != pitend)
+			// 	{
+			// 		RGBAPixel p = *pit;
+			// 		if (p) {
+			// 			p = rgba_multiply(p, biome_color);
+			// 		}
+			// 		*pdestit = p;
+			// 		pit ++;
+			// 		puvit ++;
+			// 		pimguvit ++;
+			// 		pdestit ++;
+			// 	}
+			// } else {
+				// Clip the some faces, and multiply by biome color
+				while (pit != pitend)
+				{
+					RGBAPixel p = *pit;
+					if (p) {
+						RGBAPixel puv = *puvit;
+						switch(rgba_blue(puv)){
+							case FACE_UP_INDEX:
+								if(water_top) {
+									p = 0;
+								}
+								break;
+							case FACE_LEFT_INDEX:
+								if(water_west) {
+									p = 0;
+								}
+								break;
+							case FACE_RIGHT_INDEX:
+								if(water_south) {
+									p = 0;
+								}
+								break;
+						}
+						if (p) {
+							p = rgba_multiply(p, biome_color);
+						}
+					}
+					*pdestit = p;
+					pit ++;
+					puvit ++;
+					// pimguvit ++;
+					pdestit ++;
 				}
+			// }
+
+		// if (rgba_alpha(uv_pixel) < rgba_alpha(top_uv_pixel)) {
+		// 	blend(pixel, top_pixel);
+		// } else {
+		// 	// The top pixel is behind the block one, so use the alpha of
+		// 	// the destination pixel to blend the top pixel behind
+		// 	RGBAPixel tmp_pix = pixel;
+		// 	pixel = top_pixel;
+		// 	blend(pixel, tmp_pix);
+		// }
+
+
+			blockImageBlendZBuffered(tile_image.image, uv_image, waterLogTinted, *waterlog_uv);
+		}
+
+		if (block_image->shadow_edges > 0) {
+			auto shadow_edge = [this, top](const mc::BlockPos& dir) {
+				const BlockImage& b = block_images->getBlockImage(getBlock(top + dir).id);
+				//return b.is_transparent && !(b.is_waterlogged || b.is_waterlogged);
+				return b.shadow_edges == 0;
+			};
+			uint8_t north = shadow_edges[0] && shadow_edge(mc::DIR_NORTH);
+			uint8_t south = shadow_edges[1] && shadow_edge(mc::DIR_SOUTH);
+			uint8_t east = shadow_edges[2] && shadow_edge(mc::DIR_EAST);
+			uint8_t west = shadow_edges[3] && shadow_edge(mc::DIR_WEST);
+			uint8_t bottom = shadow_edges[4] && shadow_edge(mc::DIR_BOTTOM);
+
+			if (north + south + east + west + bottom != 0) {
+				int f = block_image->shadow_edges;
+				north *= shadow_edges[0] * f;
+				south *= shadow_edges[1] * f;
+				east *= shadow_edges[2] * f;
+				west *= shadow_edges[3] * f;
+				bottom *= shadow_edges[4] * f;
+				blockImageShadowEdges(tile_image.image, uv_image,
+					north, south, east, west, bottom);
 			}
+		}
 
-			// let the render mode do their magic with the block image
-			//render_mode->draw(node.image, node.pos, id, data);
-			render_mode->draw(tile_image.image, block_image, tile_image.pos, id);
-
-			tile_images.insert(tile_image);
-		};
-
-		addTileImage(id, *block_image, 0);
+		// let the render mode do their magic with the block image
+		//render_mode->draw(node.image, node.pos, id, data);
+		render_mode->draw(tile_image.image, *block_image, tile_image.pos, id);
+		tile_images.insert(tile_image);
 
 		// if this block is not transparent, then stop looking for more blocks
 		if (!block_image->is_transparent) {
@@ -322,7 +362,7 @@ uint32_t TileRenderer::getBiomeColor(const mc::BlockPos& pos, const BlockImage& 
 		for (int dz = -radius; dz <= radius; dz++) {
 			mc::BlockPos other = pos + mc::BlockPos(dx, dz, 0);
 			mc::ChunkPos chunk_pos(other);
-			
+
 			uint16_t biome_id;
 			mc::LocalBlockPos local(other);
 			if (chunk_pos != chunk->getPos()) {

@@ -61,11 +61,11 @@ void OverlayRenderMode::draw(RGBAImage& image, const BlockImage& block_image, co
 			color_right = getBlockColor(pos + mc::DIR_SOUTH, block_images->getBlockImage(right.id));
 			
 			if (rgba_alpha(color_top) != 0)
-				blockImageTintHighContrast(image, block_image.uv_image, FACE_UP_INDEX, color_top);
+				blockImageTintHighContrast(image, block_image.uv_image(), FACE_UP_INDEX, color_top);
 			if (rgba_alpha(color_left) != 0)
-				blockImageTintHighContrast(image, block_image.uv_image, FACE_LEFT_INDEX, color_left);
+				blockImageTintHighContrast(image, block_image.uv_image(), FACE_LEFT_INDEX, color_left);
 			if (rgba_alpha(color_right) != 0)
-				blockImageTintHighContrast(image, block_image.uv_image, FACE_RIGHT_INDEX, color_right);
+				blockImageTintHighContrast(image, block_image.uv_image(), FACE_RIGHT_INDEX, color_right);
 		}
 	}
 }

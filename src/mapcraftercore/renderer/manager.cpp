@@ -219,10 +219,10 @@ bool RenderManager::scanWorlds() {
 			LOG(WARNING) << "Note that rendering of pre-1.13 worlds is not supported, "
 				<< "in case Mapcrafter fails to read the world.";
 			LOG(WARNING) << "See Mapcrafter legacy for rendering of older worlds. TODO";
-		} else if (world_version < 1451) {
-			// 1451 is 17w47a, should be first version of flattening and world change affected
+		} else if (world_version < 2865) {
+			// 2865 is 1.18.1, should be first version of remodeled 3d chunk based
 			LOG(ERROR) << "Rendering of world '" << tile_set_it->world_name << "'  is not supported.";
-			LOG(ERROR) << "Mapcrafter supports only worlds of Minecraft 1.13 and newer";
+			LOG(ERROR) << "This version of Mapcrafter supports only worlds of Minecraft 1.18.1 and newer";
 			LOG(ERROR) << "See Mapcrafter legacy for rendering of older worlds. TODO";
 			return false;
 		}
@@ -580,7 +580,7 @@ void RenderManager::increaseMaxZoom(const fs::path& dir,
 		util::moveFile(dir / (std::string("2.") + image_format),
 				dir / (std::string("2/3.") + image_format));
 	}
-	
+
 	if (fs::exists(dir / "3")) {
 		util::moveFile(dir / "3", dir / "3_");
 		fs::create_directories(dir / "3");
@@ -588,7 +588,7 @@ void RenderManager::increaseMaxZoom(const fs::path& dir,
 		util::moveFile(dir / (std::string("3.") + image_format),
 				dir / (std::string("3/2.") + image_format));
 	}
-	
+
 	if (fs::exists(dir / "4")) {
 		util::moveFile(dir / "4", dir / "4_");
 		fs::create_directories(dir / "4");

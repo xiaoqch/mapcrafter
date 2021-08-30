@@ -21,3 +21,12 @@ docs/_build/
 /_wd_
 /.vscode
 /build
+build-fast.sh
+build.sh
+clean.sh
+Dockerfile-dev
+entrypoint-dev.sh
+start-dev.sh
+start-nginx.sh
+*.dylib
+src/data/blocks

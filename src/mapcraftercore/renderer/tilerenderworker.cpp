@@ -198,7 +198,7 @@ void TileRenderWorker::operator()() {
 		progress->setMax(work);
 		progress->setValue(0);
 	}
-	
+
 	RGBAImage image;
 	// iterate through the start composite tiles
 	for (auto it = render_work.tiles.begin(); it != render_work.tiles.end(); ++it) {

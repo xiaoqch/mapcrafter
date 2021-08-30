@@ -497,7 +497,7 @@ bool RGBAImage::readPNG(const std::string& filename) {
 	}
 	png_read_image(png, rows);
 	png_read_end(png, NULL);
-	
+
 	png_free(png, rows);
 	png_destroy_read_struct(&png, &info, NULL);
 
@@ -610,7 +610,7 @@ bool RGBAImage::writeIndexedPNG(const std::string& filename, int palette_bits, b
 		png_destroy_write_struct(&png, &info);
 		return false;
 	}
-	
+
 	png_byte* palette_alpha = (png_byte*) png_malloc(png, palette_size * sizeof(png_byte));
 	if (palette == NULL) {
 		png_free(png, palette);
@@ -630,7 +630,7 @@ bool RGBAImage::writeIndexedPNG(const std::string& filename, int palette_bits, b
 
 	OctreePalette p(colors);
 	//OctreePalette2 p(colors);
-	
+
 	std::vector<int> data_dithered;
 	if (dithered) {
 		RGBAImage copy = *this;

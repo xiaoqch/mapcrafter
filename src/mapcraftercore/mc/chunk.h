@@ -35,6 +35,8 @@ class BlockStateRegistry;
 // chunk height in sections
 const int CHUNK_LOW = -64/16;
 const int CHUNK_TOP = 320/16;
+// const int CHUNK_LOW = 0/16;
+// const int CHUNK_TOP = 256/16;
 const int BIOMES_ARRAY_SIZE = 16/4 * 16/4 * ((CHUNK_TOP-CHUNK_LOW)*16)/4;
 
 /**
@@ -45,6 +47,7 @@ struct ChunkSection {
 	uint8_t block_light[16 * 16 * 8];
 	uint8_t sky_light[16 * 16 * 8];
 	uint16_t block_ids[16 * 16 * 16];
+	uint16_t biomes[4 * 4 * 4];
 
 	inline const uint8_t* getArray(int index) const {
 		if (index == 0) {
@@ -94,6 +97,11 @@ public:
 	bool hasSection(int section) const;
 
 	/**
+	 * Returns index of the sector from y cordinate, -1 if out of scope.
+	 */
+	int getSectionIndex(int y) const;
+
+	/**
 	 * Returns the block ID at a specific position (local coordinates).
 	 */
 	uint16_t getBlockID(const LocalBlockPos& pos, bool force = false) const;
@@ -137,9 +145,6 @@ private:
 	// the array with the sections, see indexes above
 	std::vector<ChunkSection> sections;
 
-	// the biomes in this chunk, as index y * 16 + z * 4 + x
-	uint32_t biomes[BIOMES_ARRAY_SIZE];
-
 	// extra_data (e.g. from attributes read from NBT data, like beds) are stored in this map
 	std::unordered_map<int, uint16_t> extra_data_map;
 
@@ -148,7 +153,7 @@ private:
 	 * part of the world and therefore not rendered.
 	 */
 	bool checkBlockWorldCrop(int x, int z, int y) const;
-	
+
 	/**
 	 * Returns a specific block data (block data value, block light, sky light) at a
 	 * specific position. The parameter array specifies which one:

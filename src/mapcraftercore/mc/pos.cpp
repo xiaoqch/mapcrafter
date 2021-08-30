@@ -32,15 +32,15 @@ namespace mapcrafter {
 namespace mc {
 
 RegionPos::RegionPos()
-	: x(0), z(0) {
+	: x(0), z(0), y(0) {
 }
 
-RegionPos::RegionPos(int x, int z)
-	: x(x), z(z) {
+RegionPos::RegionPos(int x, int z, int y)
+	: x(x), z(z), y(y) {
 }
 
 bool RegionPos::operator==(const RegionPos& other) const {
-	return x == other.x && z == other.z;
+	return x == other.x && y == other.y && z == other.z;
 }
 
 bool RegionPos::operator!=(const RegionPos& other) const {
@@ -48,9 +48,12 @@ bool RegionPos::operator!=(const RegionPos& other) const {
 }
 
 bool RegionPos::operator<(const RegionPos& other) const {
-	if (x == other.x)
-		return z < other.z;
-	return x < other.x;
+	if (y == other.y) {
+		if (x == other.x)
+			return z < other.z;
+		return x > other.x;
+	}
+	return y < other.y;
 }
 
 RegionPos RegionPos::byFilename(const std::string& filename) {
@@ -59,10 +62,13 @@ RegionPos RegionPos::byFilename(const std::string& filename) {
 	int x, z;
 	if (sscanf(name.c_str(), "r.%d.%d.mca", &x, &z) != 2)
 		throw std::runtime_error("Invalid filename " + name + "!");
-	return RegionPos(x, z);
+	int y = CHUNK_Y_LOWEST;
+	return RegionPos(x, y, z);
 }
 
 void RegionPos::rotate(int count) {
+	org_x = x;
+	org_z = z;
 	for (int i = 0; i < count; i++) {
 		int nx = -z, nz = x;
 		x = nx;
@@ -71,31 +77,35 @@ void RegionPos::rotate(int count) {
 }
 
 ChunkPos::ChunkPos()
-	: x(0), z(0) {
+	: x(0), z(0), y(0) {
 }
 
-ChunkPos::ChunkPos(int x, int z)
-	: x(x), z(z) {
+ChunkPos::ChunkPos(int x, int z, int y)
+	: x(x), z(z), y(y) {
 }
 
 ChunkPos::ChunkPos(const BlockPos& block) {
-	x = util::floordiv(block.x, 16);
-	z = util::floordiv(block.z, 16);
+	x = block.x >> 4;
+	y = block.y >> 4;
+	z = block.z >> 4;
 }
 
 int ChunkPos::getLocalX() const {
-	return x % 32 < 0 ? x % 32 + 32 : x % 32;
+	return x & (~int(31));
+}
+int ChunkPos::getLocalY() const {
+	return y & (~int(31));;
 }
 int ChunkPos::getLocalZ() const {
-	return z % 32 < 0 ? z % 32 + 32 : z % 32;
+	return z & (~int(31));;
 }
 
 RegionPos ChunkPos::getRegion() const {
-	return RegionPos(util::floordiv(x, 32), util::floordiv(z, 32));
+	return RegionPos(x>>5, z>>5, y>>5);
 }
 
 bool ChunkPos::operator==(const ChunkPos& other) const {
-	return x == other.x && z == other.z;
+	return x == other.x && z == other.z && y == other.y;
 }
 
 bool ChunkPos::operator!=(const ChunkPos& other) const {
@@ -103,9 +113,12 @@ bool ChunkPos::operator!=(const ChunkPos& other) const {
 }
 
 bool ChunkPos::operator<(const ChunkPos& other) const {
-	if (x == other.x)
-		return z < other.z;
-	return x < other.x;
+	if (y == other.y) {
+		if (x == other.x)
+			return z < other.z;
+		return x > other.x;
+	}
+	return y < other.y;
 }
 
 int ChunkPos::getRow() const {
@@ -116,11 +129,13 @@ int ChunkPos::getCol() const {
 	return x + z;
 }
 
-ChunkPos ChunkPos::byRowCol(int row, int col) {
-	return ChunkPos((col - row) / 2, (col + row) / 2);
+ChunkPos ChunkPos::byRowCol(int row, int col, int height) {
+	return ChunkPos((col - row) / 2, (col + row) / 2, height);
 }
 
 void ChunkPos::rotate(int count) {
+	org_x = x;
+	org_z = z;
 	for (int i = 0; i < count; i++) {
 		int nx = 31 - z;
 		z = x;
@@ -137,7 +152,7 @@ BlockPos::BlockPos(int x, int z, int y)
 }
 
 int BlockPos::getRow() const {
-	return z - x + (CHUNK_TOP*16 - y) * 4;
+	return z - x;
 }
 
 int BlockPos::getCol() const {
@@ -201,19 +216,29 @@ LocalBlockPos::LocalBlockPos(int x, int z, int y)
 }
 
 LocalBlockPos::LocalBlockPos(const BlockPos& pos)
-		: x(pos.x & 15), z(pos.z & 15), y(pos.y) {
+		: x(pos.x & 15), z(pos.z & 15), y(pos.y & 15) {
 }
 
 int LocalBlockPos::getRow() const {
-	return z - x + (CHUNK_TOP*16 - y) * 4;
+	return z - x;
 }
 
 int LocalBlockPos::getCol() const {
 	return x + z;
 }
 
+LocalBlockPos& LocalBlockPos::above() const {
+	LocalBlockPos p( x, z, y+1 );
+	return p;
+}
+
+LocalBlockPos& LocalBlockPos::below() const {
+	LocalBlockPos p( x, z, y-1 );
+	return p;
+}
+
 BlockPos LocalBlockPos::toGlobalPos(const ChunkPos& chunk) const {
-	return BlockPos(x + chunk.x * 16, z + chunk.z * 16, y);
+	return BlockPos(x + chunk.x * 16, z + chunk.z * 16, y + chunk.y * 16);
 }
 
 bool LocalBlockPos::operator<(const LocalBlockPos& other) const {

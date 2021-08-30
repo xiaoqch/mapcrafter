@@ -21,6 +21,7 @@
 #define BLOCKIMAGES_H_
 
 #include "blocktextures.h"
+#include "blockatlas.h"
 #include "image.h"
 #include "../mc/pos.h"
 
@@ -75,14 +76,7 @@ public:
 
 typedef std::array<float, 4> CornerValues;
 
-// TODO rename these maybe
-static const uint8_t FACE_LEFT_INDEX = ((float) 255.0 / 6.0) * 1;
-static const uint8_t FACE_RIGHT_INDEX = ((float) 255.0 / 6.0) * 4;
-static const uint8_t FACE_UP_INDEX = ((float) 255.0 / 6.0) * 2;
-
 void blockImageTest(RGBAImage& block, const RGBAImage& uv_mask);
-void blockImageMultiply(RGBAImage& block, const RGBAImage& uv_mask,
-		float factor_left, float factor_right, float factor_up);
 void blockImageMultiplyExcept(RGBAImage& block, const RGBAImage& uv_mask,
 		uint8_t except_face, float factor);
 void blockImageMultiply(RGBAImage& block, const RGBAImage& uv_mask,
@@ -94,11 +88,11 @@ void blockImageTint(RGBAImage& block, const RGBAImage& mask,
 void blockImageTint(RGBAImage& block, uint32_t color);
 void blockImageTintHighContrast(RGBAImage& block, uint32_t color);
 void blockImageTintHighContrast(RGBAImage& block, const RGBAImage& mask, int face, uint32_t color);
-void blockImageBlendTop(RGBAImage& block, const RGBAImage& uv_mask,
+void blockImageBlendZBuffered(RGBAImage& block, const RGBAImage& uv_mask,
 		const RGBAImage& top, const RGBAImage& top_uv_mask);
 void blockImageShadowEdges(RGBAImage& block, const RGBAImage& uv_mask,
 		uint8_t north, uint8_t south, uint8_t east, uint8_t west, uint8_t bottom);
-bool blockImageIsTransparent(RGBAImage& block, const RGBAImage& uv_mask);
+bool blockImageIsTransparent(const RGBAImage& block, const RGBAImage& uv_mask);
 std::array<bool, 3> blockImageGetSideMask(const RGBAImage& uv);
 
 enum class LightingType {
@@ -115,30 +109,41 @@ struct BlockImage {
 	BlockImage()
 		: lighting_specified(false) {}
 
-	RGBAImage image, uv_image;
 	std::array<bool, 3> side_mask;
-	bool is_transparent, is_air, is_full_water, is_ice;
-	
+	bool is_transparent;
+	bool is_empty;
+
 	bool is_biome;
 	bool is_masked_biome;
 	ColorMapType biome_color;
 	ColorMap biome_colormap;
-	RGBAImage biome_mask;
+	const RGBAImage* biome_mask;
 
-	bool is_waterloggable;
 	bool is_waterlogged;
-	bool has_water_top;
-	uint16_t non_waterlogged_id;
 
 	bool can_partial;
-
-	bool is_lily_pad;
 
 	bool lighting_specified;
 	LightingType lighting_type;
 	bool has_faulty_lighting;
 
 	int shadow_edges;
+
+	const RGBAImage& image(int variant=0) const {
+		return *(BlockAtlas::instance().GetImage(images_idx[abs(variant) % images_idx.size()]));
+	}
+	void image(std::vector<uint>& indexes) {
+		images_idx = indexes;
+	}
+	const RGBAImage& uv_image(int variant=0) const {
+		return *(BlockAtlas::instance().GetImage(uv_images_idx[abs(variant) % uv_images_idx.size()]));
+	}
+	void uv_image(std::vector<uint>& indexes) {
+		uv_images_idx = indexes;
+	}
+
+	std::vector<uint> images_idx;
+	std::vector<uint> uv_images_idx;
 };
 
 class RenderedBlockImages : public BlockImages {
@@ -150,8 +155,8 @@ public:
 	//virtual RGBAImage exportBlocks() const {}
 	virtual bool isBlockTransparent(uint16_t id, uint16_t data) const { return false; };
 	virtual bool hasBlock(uint16_t id, uint16_t) const { return true; };
-	virtual const RGBAImage& getBlock(uint16_t id, uint16_t data, uint16_t extra_data = 0) const { return unknown_block.image; };
-	virtual RGBAImage getBiomeBlock(uint16_t id, uint16_t data, const Biome& biome, uint16_t extra_data = 0) const { return unknown_block.image; };
+	virtual const RGBAImage& getBlock(uint16_t id, uint16_t data, uint16_t extra_data = 0) const { return unknown_block.image(); };
+	virtual RGBAImage getBiomeBlock(uint16_t id, uint16_t data, const Biome& biome, uint16_t extra_data = 0) const { return unknown_block.image(); };
 	virtual int getMaxWaterPreblit() const { return 0; };
 	//virtual int getBlockSize() const {};
 
@@ -182,7 +187,6 @@ private:
 	int texture_size;
 	int block_width, block_height;
 	// Mapcrafter-local block ID -> BlockImage (image, uv_image, is_transparent, ...)
-	//std::unordered_map<uint16_t, BlockImage> block_images;
 	std::vector<BlockImage*> block_images;
 	BlockImage unknown_block;
 };

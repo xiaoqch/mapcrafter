@@ -28,11 +28,11 @@ namespace mapcrafter {
 namespace mc {
 
 RegionFile::RegionFile()
-	: rotation(0) {
+{
 }
 
 RegionFile::RegionFile(const std::string& filename)
-	: filename(filename), rotation(0) {
+	: filename(filename) {
 	regionpos_original = RegionPos::byFilename(filename);
 	regionpos = regionpos_original;
 }
@@ -55,17 +55,23 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 	file.seekg(0, std::ios::end);
 	size_t filesize = file.tellg();
 	file.seekg(0, std::ios::beg);
+	uint32_t header[2 * 32 * 32];
+
 	// make sure the region file has a header
-	if (filesize < 8192) {
+	if (filesize < sizeof(header)) {
 		LOG(ERROR) << "Corrupt region '" << filename << "': Header is too short.";
 		return false;
 	}
 
-	for (int x = 0; x < 32; x++) {
-		for (int z = 0; z < 32; z++) {
-			file.seekg(4 * (x + z * 32), std::ios::beg);
-			int tmp;
-			file.read(reinterpret_cast<char*>(&tmp), 4);
+	// Make only one IO operation to parse the header
+	file.seekg(0, std::ios::beg);
+	file.read(reinterpret_cast<char*>(&header), sizeof(header));
+
+	for (int z = 0; z < 32; z++) {
+		for (int x = 0; x < 32; x++) {
+			// file.seekg(4 * (x + z * 32), std::ios::beg);
+			uint32_t tmp = header[(x + z * 32)];
+			// file.read(reinterpret_cast<char*>(&tmp), 4);
 			if (tmp == 0)
 				continue;
 			uint32_t offset = util::bigEndian32(tmp << 8) * 4096;
@@ -74,23 +80,18 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 						<< x << ":" << z << ".";
 				return false;
 			}
-			//uint8_t sectors = ((uint8_t*) &tmp)[3];
 
-			file.seekg(4096, std::ios::cur);
-			uint32_t timestamp;
-			file.read(reinterpret_cast<char*>(&timestamp), 4);
+			// file.seekg(4096, std::ios::cur);
+			uint32_t timestamp = header[1024 + (x + z * 32)];
+			// file.read(reinterpret_cast<char*>(&timestamp), 4);
 			timestamp = util::bigEndian32(timestamp);
 
 			// get the original (not rotated) position of the chunk
-			ChunkPos chunkpos(x + regionpos_original.x * 32, z + regionpos_original.z * 32);
+			ChunkPos chunkpos(x + regionpos_original.x * 32, z + regionpos_original.z * 32, 0);
 			// check if this chunk is not cropped
 			if (!world_crop.isChunkContained(chunkpos))
 				continue;
 
-			// now rotate this chunk position for the public set with available chunks
-			if (rotation)
-				chunkpos.rotate(rotation);
-			
 			chunk_exists[z * 32 + x] = true;
 			containing_chunks.insert(chunkpos);
 
@@ -105,19 +106,7 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 
 size_t RegionFile::getChunkIndex(const mc::ChunkPos& chunkpos) const {
 	ChunkPos unrotated = chunkpos;
-	if (rotation)
-		unrotated.rotate(4 - rotation);
 	return unrotated.getLocalZ() * 32 + unrotated.getLocalX();
-}
-
-void RegionFile::setRotation(int rotation) {
-	this->rotation = rotation;
-
-	// TODO properly handle this
-	if (rotation) {
-		regionpos = regionpos_original;
-		regionpos.rotate(rotation);
-	}
 }
 
 void RegionFile::setWorldCrop(const WorldCrop& world_crop) {
@@ -306,8 +295,6 @@ int RegionFile::loadChunk(const ChunkPos& pos, BlockStateRegistry& block_registr
 		comp = nbt::Compression::ZLIB;
 	size_t size = chunk_data[index].size();
 
-	// set the chunk rotation
-	chunk.setRotation(rotation);
 	chunk.setWorldCrop(world_crop);
 	// try to load the chunk
 	try {
