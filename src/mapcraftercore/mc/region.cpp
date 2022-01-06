@@ -23,6 +23,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <sys/param.h>
 
 namespace mapcrafter {
 namespace mc {
@@ -33,8 +34,13 @@ RegionFile::RegionFile()
 
 RegionFile::RegionFile(const std::string& filename)
 	: filename(filename) {
-	regionpos_original = RegionPos::byFilename(filename);
-	regionpos = regionpos_original;
+	regionpos = RegionPos::byFilename(filename);
+	// Adjust the Y to be the lowest provided by the file
+	// !! Disabled for now as it's a fixed value (so far ...)
+	// if (read()) {
+	// 	int yfile = lowestY();
+	// 	regionpos.y = MIN(regionpos.y,yfile);
+	// }
 }
 
 RegionFile::~RegionFile() {
@@ -69,9 +75,7 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 
 	for (int z = 0; z < 32; z++) {
 		for (int x = 0; x < 32; x++) {
-			// file.seekg(4 * (x + z * 32), std::ios::beg);
 			uint32_t tmp = header[(x + z * 32)];
-			// file.read(reinterpret_cast<char*>(&tmp), 4);
 			if (tmp == 0)
 				continue;
 			uint32_t offset = util::bigEndian32(tmp << 8) * 4096;
@@ -81,13 +85,11 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 				return false;
 			}
 
-			// file.seekg(4096, std::ios::cur);
 			uint32_t timestamp = header[1024 + (x + z * 32)];
-			// file.read(reinterpret_cast<char*>(&timestamp), 4);
 			timestamp = util::bigEndian32(timestamp);
 
-			// get the original (not rotated) position of the chunk
-			ChunkPos chunkpos(x + regionpos_original.x * 32, z + regionpos_original.z * 32, 0);
+			// get the original position of the chunk
+			ChunkPos chunkpos(x + regionpos.x * 32, z + regionpos.z * 32);
 			// check if this chunk is not cropped
 			if (!world_crop.isChunkContained(chunkpos))
 				continue;
@@ -105,8 +107,7 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 }
 
 size_t RegionFile::getChunkIndex(const mc::ChunkPos& chunkpos) const {
-	ChunkPos unrotated = chunkpos;
-	return unrotated.getLocalZ() * 32 + unrotated.getLocalX();
+	return chunkpos.getLocalZ() * 32 + chunkpos.getLocalX();
 }
 
 void RegionFile::setWorldCrop(const WorldCrop& world_crop) {
@@ -307,5 +308,46 @@ int RegionFile::loadChunk(const ChunkPos& pos, BlockStateRegistry& block_registr
 	return CHUNK_OK;
 }
 
+
+/**
+ * This method tries to read out the lowest chunksection Y value.
+ * TODO: Actually not used yet ...
+ */
+int RegionFile::lowestY() {
+	auto chunks = getContainingChunks();
+	int y = CHUNK_HIGHEST;
+	for (auto chunk_it = chunks.begin(); chunk_it != chunks.end(); ++chunk_it) {
+		ChunkPos pos = *chunk_it;
+		int index = getChunkIndex(pos);
+		if (chunk_data[index].size() == 0)
+			continue;
+
+		// get compression type and size of the data
+		uint8_t compression = chunk_data_compression[index];
+		nbt::Compression comp = nbt::Compression::NO_COMPRESSION;
+		if (compression == 1)
+			comp = nbt::Compression::GZIP;
+		else if (compression == 2)
+			comp = nbt::Compression::ZLIB;
+
+		Chunk chunk;
+		size_t size = chunk_data[index].size();
+		nbt::NBTFile nbt;
+
+		try {
+			nbt.readNBT(reinterpret_cast<char*>(&chunk_data[index][0]), size, comp);
+			if (!nbt.hasTag<nbt::TagInt>("yPos")) {
+				continue;
+			}
+			int ychunk = nbt.findTag<nbt::TagInt>("yPos").payload;
+			y = MIN(y, ychunk);
+		} catch (const nbt::NBTError& err) {
+			LOG(ERROR) << "Unable to read chunk at " << pos << ": " << err.what();
+			continue;
+		}
+
+	}
+	return y;
+}
 }
 }

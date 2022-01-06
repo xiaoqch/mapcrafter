@@ -25,6 +25,8 @@
 #include <vector>
 #include <boost/filesystem.hpp>
 
+#include "renderrotation.h"
+
 namespace fs = boost::filesystem;
 
 /**
@@ -164,7 +166,7 @@ std::ostream& operator<<(std::ostream& stream, const TilePath& path);
  */
 class TileSet {
 public:
-	TileSet(int tile_width);
+	TileSet(int tile_width, const RenderRotation& rotation);
 	virtual ~TileSet();
 
 	virtual void mapChunkToTiles(const mc::ChunkPos& chunk, std::set<TilePos>& tiles) = 0;
@@ -260,6 +262,10 @@ public:
 	 * Returns the count of required render tiles a specific composite tiles contains.
 	 */
 	int getContainingRenderTiles(const TilePath& tile) const;
+
+protected:
+	// Need to keep the rotation of the world as it impacts tile/chunk relationship
+	const RenderRotation& rotation;
 
 private:
 	// width of the tiles in chunks

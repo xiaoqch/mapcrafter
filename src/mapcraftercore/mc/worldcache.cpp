@@ -136,7 +136,7 @@ Chunk* WorldCache::getChunk(const ChunkPos& pos) {
 
 Block WorldCache::getBlock(const mc::BlockPos& pos, const mc::Chunk* chunk, int get) {
 	// this can happen when we check for the bottom block shadow edges
-	if (pos.y < CHUNK_LOW*16)
+	if (pos.y < CHUNK_LOWEST*16)
 		return Block();
 
 	mc::ChunkPos chunk_pos(pos);
@@ -152,7 +152,7 @@ Block WorldCache::getBlock(const mc::BlockPos& pos, const mc::Chunk* chunk, int 
 		Block block;
 		block.pos = pos;
 		if (get & GET_ID) {
-			block.id = mychunk->getBlockID(local);
+			block.id = mychunk->getBlockID(local, true);
 			block.fields_set |= GET_ID;
 		}
 		if (get & GET_BIOME) {

@@ -22,6 +22,7 @@
 #include "biomes.h"
 #include "../util.h"
 #include "../mc/blockstate.h"
+#include "../mc/chunk.h"
 
 #include <chrono>
 #include <map>
@@ -154,13 +155,6 @@ void blockImageMultiplyExcept(RGBAImage& block, const RGBAImage& uv_mask,
 }
 
 namespace {
-
-/*
-inline uint32_t divide255(uint32_t v1, uint32_t v2) {
-	uint32_t t = v1 * v2 + 128;
-	return ((t >> 8) + t) >> 8;
-}
-*/
 
 inline uint32_t mix(uint32_t x, uint32_t y, uint32_t a) {
 	// >> 8 = / 256, serves as approximation for division by 255
@@ -679,7 +673,6 @@ RGBAImage RenderedBlockImages::exportBlocks() const {
 }
 
 const BlockImage& RenderedBlockImages::getBlockImage(uint16_t id) const {
-	// uint16_t id_next = id + 1;
 	if (block_images.size() <= id) {
 		const mc::BlockState& block_state = block_registry.getBlockState(id);
 
@@ -815,7 +808,7 @@ void RenderedBlockImages::runBenchmark() {
 
 	std::chrono::time_point<clock_> begin = clock_::now();
 	const RGBAImage& image = solid.image();
-	RGBAImage solid_image(image.height, image.width);
+	RGBAImage solid_image(image.getHeight(), image.getWidth());
 	solid_image.simpleBlit(image,0,0);
 
 	for (size_t i = 0; i < 1000000; i++) {

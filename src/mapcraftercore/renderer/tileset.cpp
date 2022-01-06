@@ -219,8 +219,8 @@ TilePath TilePath::byTilePos(const TilePos& tile, int depth) {
 	return path;
 }
 
-TileSet::TileSet(int tile_width)
-	: tile_width(tile_width), min_depth(0), depth(0) {
+TileSet::TileSet(int tile_width, const RenderRotation& rotation)
+	: rotation(rotation), tile_width(tile_width), min_depth(0), depth(0) {
 }
 
 TileSet::~TileSet() {
@@ -353,7 +353,6 @@ void TileSet::updateContainingRenderTiles() {
 void TileSet::scan(const mc::World& world) {
 	TilePos tile_offset(0, 0);
 	scan(world, false, tile_offset);
-	setDepth(min_depth);
 }
 
 void TileSet::scan(const mc::World& world, bool auto_center, TilePos& tile_offset) {

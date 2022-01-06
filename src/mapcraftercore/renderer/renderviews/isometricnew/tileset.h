@@ -27,7 +27,7 @@ namespace renderer {
 
 class NewIsometricTileSet : public TileSet {
 public:
-	NewIsometricTileSet(int tile_width);
+	NewIsometricTileSet(int tile_width, const RenderRotation& rotation);
 
 	virtual void mapChunkToTiles(const mc::ChunkPos& chunk, std::set<TilePos>& tiles);
 };

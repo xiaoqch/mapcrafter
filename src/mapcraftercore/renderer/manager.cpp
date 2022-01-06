@@ -48,7 +48,7 @@ RenderBehaviors::~RenderBehaviors() {
 }
 
 RenderBehavior RenderBehaviors::getRenderBehavior(const std::string& map,
-		int rotation) const {
+		const RenderRotation& rotation) const {
 	if (!render_behaviors.count(map))
 		return default_behavior;
 	return render_behaviors.at(map).at(rotation);
@@ -60,7 +60,7 @@ void RenderBehaviors::setRenderBehavior(const std::string& map,
 		render_behaviors[map][rotation] = behavior;
 }
 
-void RenderBehaviors::setRenderBehavior(const std::string& map, int rotation,
+void RenderBehaviors::setRenderBehavior(const std::string& map, const RenderRotation& rotation,
 		RenderBehavior behavior) {
 	// set whole map to default behavior if setting the first rotation
 	if (!render_behaviors.count(map))
@@ -95,11 +95,11 @@ void parseRenderBehaviorMaps(const std::vector<std::string>& maps,
 		}
 
 		// TODO maybe also move that conversion out to a file with global constants
-		int r = -1;
-		if (rotation == "tl") r = 0;
-		if (rotation == "tr") r = 1;
-		if (rotation == "br") r = 2;
-		if (rotation == "bl") r = 3;
+		RenderRotation r = RenderRotation();
+		if (rotation == "tl") r.setRotation(RenderRotation::TOP_LEFT);
+		if (rotation == "tr") r.setRotation(RenderRotation::TOP_RIGHT);
+		if (rotation == "br") r.setRotation(RenderRotation::BOTTOM_RIGHT);
+		if (rotation == "bl") r.setRotation(RenderRotation::BOTTOM_LEFT);
 
 		if (!config.hasMap(map)) {
 			LOG(WARNING) << "Unknown map '" << map << "'.";
@@ -107,17 +107,17 @@ void parseRenderBehaviorMaps(const std::vector<std::string>& maps,
 		}
 
 		if (!rotation.empty()) {
-			if (r == -1) {
+			if (r == RenderRotation::ALL) {
 				LOG(WARNING) << "Unknown rotation '" << rotation << "'.";
 				continue;
 			}
-			if (!config.getMap(map).getRotations().count(r)) {
+			if (!config.getMap(map).getRotations().count((RenderRotation::Direction)r)) {
 				LOG(WARNING) << "Map '" << map << "' does not have rotation '" << rotation << "'.";
 				continue;
 			}
 		}
 
-		if (r != -1)
+		if (r != RenderRotation::ALL)
 			behaviors.setRenderBehavior(map, r, behavior);
 		else
 			behaviors.setRenderBehavior(map, behavior);
@@ -178,11 +178,11 @@ bool RenderManager::scanWorlds() {
 			continue;
 
 		// just the rotations that are not to be skipped are required
-		std::set<int> required_rotations;
+		std::set<RenderRotation::Direction> required_rotations;
 		auto map_tile_sets = map_it->getTileSets();
 		for (auto tile_set_it = map_tile_sets.begin();
 				tile_set_it != map_tile_sets.end(); ++tile_set_it) {
-			int rotation = tile_set_it->rotation;
+			RenderRotation::Direction rotation = tile_set_it->rotation;
 			// but we have to scan every rotation of every map to make sure that all
 			// rotations of a map use the same zoom level, especially when just one
 			// rotation is rendered but the other ones are skipped
@@ -201,12 +201,11 @@ bool RenderManager::scanWorlds() {
 	for (auto tile_set_it = needed_tile_sets.begin();
 			tile_set_it != needed_tile_sets.end(); ++tile_set_it) {
 		config::WorldSection world_config = config.getWorld(tile_set_it->world_name);
-		RenderView* render_view = createRenderView(tile_set_it->render_view);
+		RenderView* render_view = createRenderView(tile_set_it->render_view, tile_set_it->rotation);
 
 		// load the world
 		mc::World world(world_config.getInputDir().string(),
 				world_config.getDimension());
-		world.setRotation(tile_set_it->rotation);
 		world.setWorldCrop(world_config.getWorldCrop());
 		if (!world.load()) {
 			LOG(FATAL) << "Unable to load world " << tile_set_it->world_name << "!";
@@ -219,8 +218,8 @@ bool RenderManager::scanWorlds() {
 			LOG(WARNING) << "Note that rendering of pre-1.13 worlds is not supported, "
 				<< "in case Mapcrafter fails to read the world.";
 			LOG(WARNING) << "See Mapcrafter legacy for rendering of older worlds. TODO";
-		} else if (world_version < 2865) {
-			// 2865 is 1.18.1, should be first version of remodeled 3d chunk based
+		} else if (world_version < 2860) {
+			// 2860 is 1.18.1, should be first version of remodeled 3d chunk based
 			LOG(ERROR) << "Rendering of world '" << tile_set_it->world_name << "'  is not supported.";
 			LOG(ERROR) << "This version of Mapcrafter supports only worlds of Minecraft 1.18.1 and newer";
 			LOG(ERROR) << "See Mapcrafter legacy for rendering of older worlds. TODO";
@@ -268,10 +267,10 @@ bool RenderManager::scanWorlds() {
 	return true;
 }
 
-void RenderManager::renderMap(const std::string& map, int rotation, int threads,
+void RenderManager::renderMap(const std::string& map, const RenderRotation& rotation, int threads,
 		util::IProgressHandler* progress) {
 	// make sure this map/rotation actually exists and should be rendered
-	if (!config.hasMap(map) || !config.getMap(map).getRotations().count(rotation)
+	if (!config.hasMap(map) || !config.getMap(map).getRotations().count((RenderRotation::Direction)rotation)
 			|| render_behaviors.getRenderBehavior(map, rotation) == RenderBehavior::SKIP)
 		return;
 
@@ -286,7 +285,7 @@ void RenderManager::renderMap(const std::string& map, int rotation, int threads,
 
 	// TODO keep block state registry global per map. or are there any reasons to make more global?
 	mc::BlockStateRegistry block_registry;
-	std::shared_ptr<RenderView> render_view(createRenderView(map_config.getRenderView()));
+	std::shared_ptr<RenderView> render_view(createRenderView(map_config.getRenderView(), rotation));
 
 	// output a small notice if we render this map incrementally
 	int last_rendered = web_config.getMapLastRendered(map, rotation);
@@ -299,7 +298,7 @@ void RenderManager::renderMap(const std::string& map, int rotation, int threads,
 
 	fs::path output_dir = config.getOutputPath(map + "/" + config::ROTATION_NAMES_SHORT[rotation]);
 	// get the tile set
-	TileSet* tile_set = tile_sets[map_config.getTileSet(rotation)].get();
+	TileSet* tile_set = tile_sets[map_config.getTileSet((RenderRotation::Direction)rotation)].get();
 	if (render_behaviors.getRenderBehavior(map, rotation) == RenderBehavior::AUTO) {
 		// if incremental render, scan which tiles might have changed
 		LOG(INFO) << "Scanning required tiles...";
@@ -307,7 +306,6 @@ void RenderManager::renderMap(const std::string& map, int rotation, int threads,
 		if (map_config.useImageModificationTimes())
 			tile_set->scanRequiredByFiletimes(output_dir, map_config.getImageFormatSuffix());
 		else
-			//tile_set->scanRequiredByTimestamp(settings.last_render[rotation]);
 			tile_set->scanRequiredByTimestamp(web_config.getMapLastRendered(map, rotation));
 	} else {
 		// or just set all tiles required if force-rendering
@@ -434,7 +432,7 @@ bool RenderManager::run(int threads, bool batch) {
 	return true;
 }
 
-const std::vector<std::pair<std::string, std::set<int> > >& RenderManager::getRequiredMaps() const {
+const std::vector<std::pair<std::string, std::set<RenderRotation::Direction> > >& RenderManager::getRequiredMaps() const {
 	return required_maps;
 }
 

@@ -22,6 +22,7 @@
 
 #include "../../image.h"
 #include "../../tilerenderer.h"
+#include "../../renderview.h"
 
 #include <boost/filesystem.hpp>
 
@@ -48,45 +49,29 @@ private:
 	int min_row, max_row;
 	int min_col, max_col;
 	mc::BlockPos top;
+	mc::BlockPos current;
+
+	const RenderView* render_view;
+	int draw_x, draw_y;
+
+	mc::BlockPos tile_dir;
+	mc::BlockPos tile_rewind;
+
+	static mc::ChunkPos tile2Pos(int r, int c, const RenderRotation& rotation);
+	mc::ChunkPos tile2Pos(int r, int c) const;
+	int pos2Row(const mc::BlockPos& pos) const;
+	int pos2Col(const mc::BlockPos& pos) const;
+
 public:
-	TileTopBlockIterator(const TilePos& tile, int block_size, int tile_width);
+	TileTopBlockIterator(const TilePos& tile, int block_size, int tile_width, const RenderView* render_view);
 	~TileTopBlockIterator();
 
-	void next();
-	bool end() const;
-
-	mc::BlockPos current;
-	int draw_x, draw_y;
-};
-
-/**
- * Iterates over the blocks, which are on a tile on the same position,
- * this means every block is (x+1, z-1 and y-1) of the last block
- */
-class BlockRowIterator {
-public:
-	BlockRowIterator(const mc::BlockPos& block);
-	~BlockRowIterator();
+	mc::BlockPos getCurrentPos() const { return current; };
+	int getDrawX() const { return draw_x; };
+	int getDrawY() const { return draw_y; };
 
 	void next();
 	bool end() const;
-
-	mc::BlockPos current;
-};
-
-/**
- * A block, which should get drawed on a tile.
- */
-struct RenderBlock {
-
-	// drawing position in pixels on the tile
-	int x, y;
-	bool transparent;
-	RGBAImage image;
-	mc::BlockPos pos;
-	uint8_t id, data;
-
-	bool operator<(const RenderBlock& other) const;
 };
 
 }
@@ -105,7 +90,7 @@ public:
 	virtual int getTileSize() const;
 
 protected:
-	virtual void renderTopBlocks(const TilePos& tile_pos, std::set<TileImage>& tile_images);
+	virtual void renderTopBlocks(const TilePos& tile_pos, boost::container::vector<TileImage>& tile_images);
 };
 
 }

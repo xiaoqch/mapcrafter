@@ -32,12 +32,10 @@ namespace mc {
 
 class BlockStateRegistry;
 
-// chunk height in sections
-const int CHUNK_LOW = -64/16;
-const int CHUNK_TOP = 320/16;
-// const int CHUNK_LOW = 0/16;
-// const int CHUNK_TOP = 256/16;
-const int BIOMES_ARRAY_SIZE = 16/4 * 16/4 * ((CHUNK_TOP-CHUNK_LOW)*16)/4;
+// Chunk height
+const int CHUNK_LOWEST = -4;	// Included
+const int CHUNK_HIGHEST = 20;	// Excluded
+const int Y_CHUNKS_PER_REGION_FILE = 24;	// Number of chunksection in a chunk (to date)
 
 /**
  * A 16x16x16 section of a chunk.
@@ -70,11 +68,6 @@ public:
 	~Chunk();
 
 	/**
-	 * Sets the rotation of the world. You have to call this before loading the NBT data.
-	 */
-	void setRotation(int rotation);
-
-	/**
 	 * Sets the boundaries of the world.
 	 */
 	void setWorldCrop(const WorldCrop& world_crop);
@@ -92,14 +85,14 @@ public:
 	void clear();
 
 	/**
-	 * Returns whether the chunk has a specific section.
+	 * Returns whether the chunk has a specific section for the given Y value.
 	 */
-	bool hasSection(int section) const;
+	bool hasSection(int y) const;
 
 	/**
-	 * Returns index of the sector from y cordinate, -1 if out of scope.
+	 * Returns pointer to the section for the given y cordinate, NULL if no data available, or out of scope.
 	 */
-	int getSectionIndex(int y) const;
+	const ChunkSection* getSection(int y) const;
 
 	/**
 	 * Returns the block ID at a specific position (local coordinates).
@@ -119,29 +112,28 @@ public:
 	/**
 	 * Returns the block light at a specific position (local coordinates).
 	 */
-	uint8_t getBiomeAt(const LocalBlockPos& pos) const;
+	uint16_t getBiomeAt(const LocalBlockPos& pos) const;
 
 	/**
-	 * Returns the position of the chunk. This position may be, depending on the map,
-	 * the rotated version of the original position.
+	 * Returns the position of the chunk.
 	 */
 	const ChunkPos& getPos() const;
 
-private:
-	// internal original chunk position and public chunk position (which may be rotated)
-	ChunkPos chunkpos, chunkpos_original;
+	// ID of the "no operation" block
+	static uint16_t nop_id;
 
-	// rotation and cropping of the world
-	int rotation;
+private:
+	// chunk position
+	ChunkPos chunkpos;
+
+	// cropping of the world
 	WorldCrop world_crop;
 	// whether the chunk is completely contained (according x- and z-coordinates, not y)
 	bool chunk_completely_contained;
 
-	uint16_t air_id;
-
 	// the index of the chunk sections in the sections array
 	// or -1 if section does not exist
-	int section_offsets[CHUNK_TOP-CHUNK_LOW];
+	int section_offsets[CHUNK_HIGHEST-CHUNK_LOWEST];
 	// the array with the sections, see indexes above
 	std::vector<ChunkSection> sections;
 
@@ -149,7 +141,7 @@ private:
 	std::unordered_map<int, uint16_t> extra_data_map;
 
 	/**
-	 * Checks whether a block (local coordinates, original/unrotated) is in the cropped
+	 * Checks whether a block is in the cropped
 	 * part of the world and therefore not rendered.
 	 */
 	bool checkBlockWorldCrop(int x, int z, int y) const;

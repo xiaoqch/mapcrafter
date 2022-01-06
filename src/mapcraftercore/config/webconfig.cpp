@@ -147,7 +147,7 @@ bool WebConfig::readConfigJS() {
 		if (map_settings_found)
 			writeConfigJS();
 	}
-	
+
 	// if no config.js file was found that's just fine
 	// probably rendering for the first time
 	return true;
@@ -231,10 +231,10 @@ picojson::value WebConfig::getConfigJSON() const {
 	for (auto it = tile_sets.begin(); it != tile_sets.end(); ++it) {
 		picojson::object tile_set_json;
 		tile_set_json["maxZoom"] = picojson::value((double) getTileSetsMaxZoom(*it));
-		
+
 		picojson::array tile_offsets_json;
 		for (int rotation = 0; rotation < 4; rotation++) {
-			renderer::TilePos offset = getTileSetTileOffset(TileSetID(*it, rotation));
+			renderer::TilePos offset = getTileSetTileOffset(TileSetID(*it, (renderer::RenderRotation::Direction)rotation));
 			picojson::array offset_json;
 			offset_json.push_back(picojson::value((double) offset.getX()));
 			offset_json.push_back(picojson::value((double) offset.getY()));
@@ -295,7 +295,7 @@ picojson::value WebConfig::getConfigJSON() const {
 		map_json["lastRendered"] = picojson::value(last_rendered_json);
 
 		map_json["tileSetGroup"] = picojson::value(map_it->getTileSetGroup().toString());
-		
+
 		maps_json[map_it->getShortName()] = picojson::value(map_json);
 	}
 
@@ -338,17 +338,17 @@ void WebConfig::parseConfigJSON(const picojson::object& object) {
 		picojson::object tile_set_json = util::json_get<picojson::object>(tile_sets_json, tile_set.toString());
 		tile_sets_max_zoom[tile_set] = util::json_get<double>(tile_set_json, "maxZoom");
 		LOG(DEBUG) << "ts " << tile_set.toString() << " max_zoom=" << tile_sets_max_zoom[tile_set];
-		
+
 		picojson::array array = util::json_get<picojson::array>(tile_set_json, "tileOffsets");
 		if (array.size() != 4)
 			throw util::JSONError("Invalid 'tileOffsets' array!");
 		for (int r = 0; r < 4; r++)
-			tile_set_tile_offset[TileSetID(tile_set, r)] = parseTilePosJSON(array[r]);
+			tile_set_tile_offset[TileSetID(tile_set, (renderer::RenderRotation::Direction)r)] = parseTilePosJSON(array[r]);
 		LOG(DEBUG) << "ts " << tile_set.toString() << " tile_offsets="
-			<< tile_set_tile_offset[TileSetID(tile_set, 0)] << ","
-			<< tile_set_tile_offset[TileSetID(tile_set, 1)] << ","
-			<< tile_set_tile_offset[TileSetID(tile_set, 2)] << ","
-			<< tile_set_tile_offset[TileSetID(tile_set, 3)];
+			<< tile_set_tile_offset[TileSetID(tile_set, renderer::RenderRotation::TOP_LEFT)] << ","
+			<< tile_set_tile_offset[TileSetID(tile_set, renderer::RenderRotation::TOP_RIGHT)] << ","
+			<< tile_set_tile_offset[TileSetID(tile_set, renderer::RenderRotation::BOTTOM_RIGHT)] << ","
+			<< tile_set_tile_offset[TileSetID(tile_set, renderer::RenderRotation::BOTTOM_LEFT)];
 	}
 
 	// parse the map objects

@@ -63,13 +63,13 @@ int SideTileRenderer::getTileHeight() const {
 	return block_images->getBlockHeight() * 8 * tile_width;
 }
 
-void SideTileRenderer::renderTopBlocks(const TilePos& tile_pos, std::set<TileImage>& tile_images) {
+void SideTileRenderer::renderTopBlocks(const TilePos& tile_pos, boost::container::vector<TileImage>& tile_images) {
 	int block_width = block_images->getBlockWidth();
 	int block_height = block_images->getBlockHeight();
 	for (int cx = 0; cx < tile_width; cx++) {
 		for (int cz = 0; cz < tile_width; cz++) {
-			mc::ChunkPos chunkpos(tile_pos.getX() * tile_width + cx, tile_pos.getY() * tile_width + cz, 0);
-			mc::BlockPos blockpos(chunkpos.x * 16, chunkpos.z * 16, mc::CHUNK_TOP*16 - 1);
+			mc::ChunkPos chunkpos(tile_pos.getX() * tile_width + cx, tile_pos.getY() * tile_width + cz);
+			mc::BlockPos blockpos(chunkpos.x * 16, chunkpos.z * 16, mc::CHUNK_HIGHEST*16 - 1);
 
 			int dx = block_width * cx * 16;
 			int dz = block_height * cz * 8;

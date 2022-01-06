@@ -1,6 +1,7 @@
 # Mapcrafter [![Build Status](https://travis-ci.org/mapcrafter/mapcrafter.svg?branch=master)](https://travis-ci.org/mapcrafter/mapcrafter)
 
 by Moritz Hilscher
+*(modified by Michael Lavaire)*
 
 Mapcrafter is a high performance Minecraft map renderer written in C++. It renders
 Minecraft worlds to a bunch of tiles (images) which are viewable as a map in any browser
@@ -27,8 +28,8 @@ using Leaflet.js.
 
 ## Supported Minecraft versions
 
-The current version supports Minecraft versions 1.13 through 1.16. Newer versions may partially work.
-For Minecraft 1.12 (or older) please use [Mapcrafter 2.4](https://github.com/mapcrafter/mapcrafter/tree/v.2.4).
+The current version supports Minecraft versions 1.18.x. Newer versions may partially work.
+For Minecraft 1.17.x (or older) please use previous version of Mapcrafter.
 
 ## Features
 

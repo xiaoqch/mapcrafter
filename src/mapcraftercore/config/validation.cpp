@@ -165,11 +165,11 @@ bool isValidationValid(const ValidationList& validation) {
 	return true;
 }
 
-int stringToRotation(const std::string& rotation, std::string names[4]) {
-	for (int i = 0; i < 4; i++)
+renderer::RenderRotation::Direction stringToRotation(const std::string& rotation, std::string names[4]) {
+	for (int i = renderer::RenderRotation::TOP_LEFT; i < renderer::RenderRotation::ALL; i++)
 		if (rotation == names[i])
-			return i;
-	return -1;
+			return (renderer::RenderRotation::Direction)i;
+	return renderer::RenderRotation::ALL;
 }
 
 } /* namespace config2 */

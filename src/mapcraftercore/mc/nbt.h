@@ -128,7 +128,7 @@ public:
 	virtual ~Tag();
 
 	int8_t getType() const;
-	
+
 	template <typename T>
 	T& cast() {
 		if (type == T::TAG_TYPE)
@@ -145,7 +145,7 @@ public:
 
 	bool isWriteType() const;
 	void setWriteType(bool write_type);
-	
+
 	bool isNamed() const;
 	void setNamed(bool named);
 
@@ -161,7 +161,7 @@ public:
 class TagEnd: public Tag {
 public:
 	TagEnd() : Tag(TAG_TYPE) {}
-	
+
 	static const int8_t TAG_TYPE = (int8_t) TagType::TAG_END;
 };
 
@@ -192,7 +192,7 @@ public:
 	}
 
 	T payload;
-	
+
 	static const int8_t TAG_TYPE = (int8_t) tag_type;
 };
 
@@ -220,7 +220,7 @@ public:
 		}
 		return *this;
 	}
-	
+
 	virtual void write(std::ostream& stream) const {
 		Tag::write(stream);
 		nbtstream::write<int32_t>(stream, payload.size());
@@ -231,7 +231,7 @@ public:
 				nbtstream::write<T>(stream, payload[i]);
 		}
 	}
-	
+
 	virtual void dump(std::ostream& stream, const std::string& indendation = "") const {
 		dumpTag(stream, indendation, *this, util::str(payload.size()) + " entries");
 	}
@@ -241,7 +241,7 @@ public:
 	}
 
 	std::vector<T> payload;
-	
+
 	static const int8_t TAG_TYPE = (int8_t) tag_type;
 };
 
@@ -260,7 +260,7 @@ public:
 	virtual Tag* clone() const;
 
 	std::string payload;
-	
+
 	static const int8_t TAG_TYPE = (int8_t) TagType::TAG_STRING;
 };
 
@@ -289,7 +289,7 @@ public:
 
 	int8_t tag_type;
 	std::vector<TagPtr> payload;
-	
+
 	static const int8_t TAG_TYPE = (int8_t) TagType::TAG_LIST;
 };
 
@@ -307,26 +307,26 @@ public:
 	virtual Tag* clone() const;
 
 	bool hasTag(const std::string& name) const;
-	
+
 	template <typename T>
 	bool hasTag(const std::string& name) const {
 		if (!hasTag(name))
 			return false;
 		return payload.at(name)->getType() == T::TAG_TYPE;
 	}
-	
+
 	template <typename T>
 	bool hasArray(const std::string& name, int32_t len = -1) const {
 		static_assert(std::is_same<T, TagByteArray>::value
 				|| std::is_same<T, TagIntArray>::value
 				|| std::is_same<T, TagLongArray>::value,
-			"Only TagByteArray, TagIngArray and TagLongArray are allowed as template argument!");
+			"Only TagByteArray, TagIntArray and TagLongArray are allowed as template argument!");
 		if (!hasTag<T>(name))
 			return false;
 		T& tag = payload.at(name)->cast<T>();
 		return len == -1 || (unsigned) len == tag.payload.size();
 	}
-	
+
 	template <typename T>
 	bool hasList(const std::string& name, int32_t len = -1) const {
 		if (!hasTag<TagList>(name))
@@ -337,7 +337,7 @@ public:
 
 	Tag& findTag(const std::string& name);
 	const Tag& findTag(const std::string& name) const;
-	
+
 	template <typename T>
 	T& findTag(const std::string& name) {
 		return findTag(name).cast<T>();
@@ -351,7 +351,7 @@ public:
 	void addTag(const std::string& name, const Tag& tag);
 
 	std::map<std::string, TagPtr> payload;
-	
+
 	static const int8_t TAG_TYPE = (int8_t) TagType::TAG_COMPOUND;
 };
 

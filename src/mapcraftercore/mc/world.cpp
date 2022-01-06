@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& out, Dimension dimension) {
 }
 
 World::World(std::string world_dir, Dimension dimension)
-	: world_dir(world_dir), dimension(dimension), rotation(0) {
+	: world_dir(world_dir), dimension(dimension) {
 	std::string world_name = BOOST_FS_FILENAME(this->world_dir);
 
 	// try to find the region directory
@@ -76,12 +76,10 @@ bool World::readRegions(const fs::path& region_dir) {
 		int z = 0;
 		if(sscanf(filename.c_str(), "r.%d.%d.mca", &x, &z) != 2)
 			continue;
-		RegionPos pos(x, z, 0);
+		RegionPos pos(x, z);
 		// check if we should not crop this region
 		if (!world_crop.isRegionContained(pos))
 			continue;
-		// if (rotation)
-			// pos.rotate(rotation);
 		available_regions.insert(pos);
 		region_files[pos] = it->path().string();
 	}
@@ -98,15 +96,6 @@ fs::path World::getRegionDir() const {
 
 Dimension World::getDimension() const {
 	return dimension;
-}
-
-int World::getRotation() const {
-	return rotation;
-}
-
-
-void World::setRotation(int rotation) {
-	this->rotation = rotation;
 }
 
 WorldCrop World::getWorldCrop() const {

@@ -33,7 +33,7 @@ BlockImages* SideRenderView::createBlockImages(mc::BlockStateRegistry& block_reg
 }
 
 TileSet* SideRenderView::createTileSet(int tile_width) const {
-	return new SideTileSet(tile_width);
+	return new SideTileSet(tile_width, getRotation());
 }
 
 TileRenderer* SideRenderView::createTileRenderer(mc::BlockStateRegistry& block_registry,

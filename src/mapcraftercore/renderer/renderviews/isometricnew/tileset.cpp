@@ -25,8 +25,8 @@
 namespace mapcrafter {
 namespace renderer {
 
-NewIsometricTileSet::NewIsometricTileSet(int tile_width)
-	: TileSet(tile_width) {
+NewIsometricTileSet::NewIsometricTileSet(int tile_width, const RenderRotation& rotation)
+	: TileSet(tile_width, rotation) {
 }
 
 namespace {
@@ -61,15 +61,34 @@ void addRowColTiles(int row, int col, int tile_width, std::set<TilePos>& tiles) 
 void NewIsometricTileSet::mapChunkToTiles(const mc::ChunkPos& chunk,
 		std::set<TilePos>& tiles) {
 	// at first get row and column of the top of the chunk
-	int row = chunk.getRow();
-	int col = chunk.getCol();
+	int row;
+	int col;
+	switch ((RenderRotation::Direction)rotation) {
+		default:
+		case RenderRotation::TOP_LEFT:
+			row = - chunk.x + chunk.z;
+			col = + chunk.x + chunk.z;
+			break;
+		case RenderRotation::TOP_RIGHT:
+			row = + chunk.x + chunk.z;
+			col = + chunk.x - chunk.z;
+			break;
+		case RenderRotation::BOTTOM_RIGHT:
+			row = + chunk.x - chunk.z;
+			col = - chunk.x - chunk.z;
+			break;
+		case RenderRotation::BOTTOM_LEFT:
+			row = - chunk.x - chunk.z;
+			col = - chunk.x + chunk.z;
+			break;
+	}
 
 	// then we go through all sections of the chunk plus one on the bottom side
 	// and add the tiles the individual sections cover,
 
 	// plus one on the bottom side because with chunk section is here
 	// only the top of a chunk section meant
-	for (int i = 0; i <= (mc::CHUNK_TOP-mc::CHUNK_LOW); i++)
+	for (int i = 0; i <= (mc::CHUNK_HIGHEST-mc::CHUNK_LOWEST); i++)
 		addRowColTiles(row + 2*i, col, getTileWidth(), tiles);
 }
 

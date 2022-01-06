@@ -26,6 +26,8 @@
 
 #include <cmath>
 #include <iostream>
+#include <boost/unordered_map.hpp>
+#include <boost/array.hpp>
 
 
 namespace mapcrafter {
@@ -33,16 +35,17 @@ namespace renderer {
 
 const mc::JavaSimplexGenerator Biome::SWAMP_GRASS_NOISE;
 
-Biome::Biome(uint16_t id, double temperature, double rainfall, uint32_t green_tint, uint32_t water_tint)
-	: id(id), temperature(temperature), rainfall(rainfall),
-	  green_tint(green_tint), water_tint(water_tint) {
+Biome::Biome(std::string name, double temperature, double rainfall, uint32_t grass_tint, uint32_t foliage_tint, uint32_t water_tint, bool swamp_mod, bool forest_mod)
+	:name(name), temperature(temperature), rainfall(rainfall),
+	  grass_tint(grass_tint), foliage_tint(foliage_tint), water_tint(water_tint),
+	  swamp_mod(swamp_mod), forest_mod(forest_mod) {
 }
 
 /**
  * Returns the biome ID.
  */
-uint16_t Biome::getID() const {
-	return id;
+std::string Biome::getName() const {
+	return name;
 }
 
 /**
@@ -50,24 +53,29 @@ uint16_t Biome::getID() const {
  */
 uint32_t Biome::getColor(const mc::BlockPos& pos, const ColorMapType& color_type,
 		const ColorMap& color_map) const {
-	// handle special cases first
-	// water is hardcoded
+
 	if (color_type == ColorMapType::WATER) {
 		return water_tint;
 	}
+
+	uint32_t tint = foliage_tint;
+	if (color_type == ColorMapType::GRASS) {
+		tint = grass_tint;
+	}
+
 	// bandland grass colors
-	if (id >= 165 && id <= 167) {
-		if (color_type == ColorMapType::GRASS) {
-			return rgba(0x90, 0x91, 0x4d, 0xff);
-		} else if (color_type == ColorMapType::FOLIAGE) {
-			return rgba(0x9e, 0x81, 0x4d, 0xff);
-		}
-	}
-	// swamp grass colors
-	if ((id == 6 || id == 134) && color_type == ColorMapType::GRASS) {
-		double v = SWAMP_GRASS_NOISE.getValue(pos.x * 0.0225, pos.z * 0.0225);
-		return v < -0.1 ? rgba(0x4C, 0x76, 0x3C) : rgba(0x6A, 0x70, 0x39);
-	}
+	// if (id >= 165 && id <= 167) {
+	// 	if (color_type == ColorMapType::GRASS) {
+	// 		return rgba(0x90, 0x91, 0x4d, 0xff);
+	// 	} else if (color_type == ColorMapType::FOLIAGE) {
+	// 		return rgba(0x9e, 0x81, 0x4d, 0xff);
+	// 	}
+	// }
+	// // swamp grass colors
+	// if ((id == 6 || id == 134) && color_type == ColorMapType::GRASS) {
+	// 	double v = SWAMP_GRASS_NOISE.getValue(pos.x * 0.0225, pos.z * 0.0225);
+	// 	return v < -0.1 ? rgba(0x4C, 0x76, 0x3C) : rgba(0x6A, 0x70, 0x39);
+	// }
 
 	float elevation = std::max(pos.y - 64, 0);
 	// x is temperature
@@ -76,39 +84,50 @@ uint32_t Biome::getColor(const mc::BlockPos& pos, const ColorMapType& color_type
 	float y = std::min(1.0, std::max(0.0, rainfall)) * x;
 
 	uint32_t color = color_map.getColor(x, y);
-	color = rgba_multiply(color, green_tint);
+	color = rgba_multiply(color, tint);
 	return color;
 }
 
-// array with all possible biomes with IDs 0 ... 255
-// empty/unknown biomes in this array have the ID 0
-static Biome ALL_BIOMES[256] = {};
+// array with all possible biomes
+// empty/unknown biomes in this array have the ID 0, Name mapcrafter:unknown
 static bool biomes_initialized;
-static std::set<uint16_t> unknown_biomes;
+static boost::unordered_map<std::string, uint16_t> biome_names;
+static std::set<std::string> unknown_biomes;
 
-void initializeBiomes() {
+void Biome::initializeBiomes() {
 	// put all biomes with their IDs into the array with all possible biomes
 	for (size_t i = 0; i < BIOMES_SIZE; i++) {
-		Biome biome = BIOMES[i];
-		ALL_BIOMES[biome.getID()] = biome;
+		const Biome* biome = &BIOMES[i];
+		biome_names.insert_or_assign(biome->getName(), i);
 	}
-
 	biomes_initialized = true;
 }
 
-Biome getBiome(uint16_t id) {
+const Biome& Biome::getBiome(uint16_t id) {
+	// check if this biome exists and return the default biome otherwise
+	if (id < BIOMES_SIZE)
+		return BIOMES[id];
+	return BIOMES[DEFAULT_BIOME_ID];
+}
+
+const Biome& Biome::getBiome(std::string name) {
+	return Biome::getBiome(Biome::getBiomeId(name));
+}
+
+uint16_t Biome::getBiomeId(std::string name) {
 	// initialize biomes at the first time we access them
 	if (!biomes_initialized)
 		initializeBiomes();
 
 	// check if this biome exists and return the default biome otherwise
-	if (ALL_BIOMES[id].getID() == id)
-		return ALL_BIOMES[id];
-	if (!unknown_biomes.count(id)) {
-		LOG(WARNING) << "Unknown biome with id " << (int) id;
-		unknown_biomes.insert(id);
+	auto bit = biome_names.find(name);
+	if ( bit != biome_names.end())
+		return biome_names[name];
+	if (unknown_biomes.find(name) == unknown_biomes.end()) {
+		LOG(WARNING) << "Unknown biome " << name;
+		unknown_biomes.insert(name);
 	}
-	return ALL_BIOMES[DEFAULT_BIOME];
+	return DEFAULT_BIOME_ID;
 }
 
 } /* namespace render */

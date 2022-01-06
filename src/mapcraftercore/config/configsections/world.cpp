@@ -175,8 +175,8 @@ bool WorldSection::parseField(const std::string key, const std::string value,
 	else if (key == "default_zoom")
 		default_zoom.load(key, value, validation);
 	else if (key == "default_rotation") {
-		int rotation = stringToRotation(value, ROTATION_NAMES);
-		if (rotation == -1)
+		const renderer::RenderRotation& rotation = stringToRotation(value, ROTATION_NAMES);
+		if (rotation.getRotation() == renderer::RenderRotation::ALL)
 			validation.error("Invalid rotation '" + value + "'!");
 		default_rotation.setValue(rotation);
 	} else if (key == "sea_level") {

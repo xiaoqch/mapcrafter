@@ -65,13 +65,13 @@ class TileSetID : public TileSetGroupID {
 public:
 	TileSetID();
 	TileSetID(const std::string& world_name, renderer::RenderViewType render_view,
-			int tile_width, int rotation);
-	TileSetID(const TileSetGroupID& group, int rotation);
+			int tile_width, renderer::RenderRotation::Direction rotation);
+	TileSetID(const TileSetGroupID& group, renderer::RenderRotation::Direction rotation);
 
 	std::string toString() const;
 	bool operator<(const TileSetID& other) const;
 
-	int rotation;
+	renderer::RenderRotation::Direction rotation;
 };
 
 enum class ImageFormat {
@@ -100,7 +100,7 @@ public:
 	renderer::RenderViewType getRenderView() const;
 	renderer::RenderModeType getRenderMode() const;
 	renderer::OverlayType getOverlay() const;
-	std::set<int> getRotations() const;
+	std::set<renderer::RenderRotation::Direction> getRotations() const;
 	fs::path getBlockDir() const;
 	int getTextureSize() const;
 	int getTextureBlur() const;
@@ -118,7 +118,7 @@ public:
 	bool useImageModificationTimes() const;
 
 	TileSetGroupID getTileSetGroup() const;
-	TileSetID getTileSet(int rotation) const;
+	TileSetID getTileSet(renderer::RenderRotation::Direction rotation) const;
 	const std::set<TileSetID>& getTileSets() const;
 
 protected:
@@ -139,7 +139,7 @@ private:
 	Field<renderer::RenderModeType> render_mode;
 	Field<renderer::OverlayType> overlay;
 	Field<std::string> rotations;
-	std::set<int> rotations_set;
+	std::set<renderer::RenderRotation::Direction> rotations_set;
 
 	Field<fs::path> block_dir;
 	Field<int> texture_size, texture_blur, tile_width;

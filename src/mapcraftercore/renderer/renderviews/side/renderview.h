@@ -27,6 +27,7 @@ namespace renderer {
 
 class SideRenderView : public RenderView {
 public:
+	SideRenderView(const RenderRotation& rotation): RenderView(rotation) {};
 	virtual BlockImages* createBlockImages(mc::BlockStateRegistry& block_registry) const;
 	virtual TileSet* createTileSet(int tile_width) const;
 	virtual TileRenderer* createTileRenderer(mc::BlockStateRegistry& block_registry,

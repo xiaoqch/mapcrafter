@@ -49,8 +49,6 @@ struct Block {
 };
 
 const int GET_ID = 1;
-// obsolete
-//const int GET_DATA = 2; 
 const int GET_BIOME = 4;
 const int GET_BLOCK_LIGHT = 8;
 const int GET_SKY_LIGHT = 16;

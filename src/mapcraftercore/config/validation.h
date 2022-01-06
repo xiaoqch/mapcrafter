@@ -20,6 +20,7 @@
 #ifndef VALIDATION_H_
 #define VALIDATION_H_
 
+#include "../renderer/renderrotation.h"
 #include "../util.h"
 
 #include <iostream>
@@ -219,7 +220,7 @@ public:
 static std::string ROTATION_NAMES[4] = {"top-left", "top-right", "bottom-right", "bottom-left"};
 static std::string ROTATION_NAMES_SHORT[4] = {"tl", "tr", "br", "bl"};
 
-int stringToRotation(const std::string& rotation, std::string names[4] = ROTATION_NAMES);
+renderer::RenderRotation::Direction stringToRotation(const std::string& rotation, std::string names[4] = ROTATION_NAMES);
 
 template <typename T>
 void Field<T>::setDefault(T value) {

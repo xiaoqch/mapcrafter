@@ -28,4 +28,4 @@
 /* #undef HAVE_UNISTD_H */
 /* #undef HAVE_SYSLOG_H */
 
-/* #undef OPT_USE_BOOST_THREAD */
+#define OPT_USE_BOOST_THREAD

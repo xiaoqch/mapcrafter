@@ -50,15 +50,13 @@ std::ostream& operator<<(std::ostream& out, Dimension dimension);
 
 /**
  * Simple hash function to use regions in unordered_set/map.
- * This just assumes that there are maximal 8096 regions on x/z axis, this are
- * all in all 8096^2=67108864 regions. I think this should be enough for now.
+ * This is the algorythm used in Minecraft 1.18.1 engine to hash chunk coordinates
  */
-// This is the algorythm used by the Minecraft 1.18.1 engine itself to hash chunk coordinates
 struct hash_function_chunk {
 	long operator()(const ChunkPos& chunk) const {
 		long hash = 0L;
 		hash |= ((long)chunk.x & 0x3FFFFF) << 42;
-		hash |= ((long)chunk.y & 0x0FFFFF) << 0;
+		// hash |= ((long)chunk.y & 0x0FFFFF) << 0;
 		hash |= ((long)chunk.z & 0x3FFFFF) << 20;
 		return hash;
 	}
@@ -67,7 +65,7 @@ struct hash_function_region {
 	long operator()(const RegionPos& region) const {
 		long hash = 0L;
 		hash |= ((long)region.x & 0x3FFFFF) << 42;
-		hash |= ((long)region.y & 0x0FFFFF) << 0;
+		// hash |= ((long)region.y & 0x0FFFFF) << 0;
 		hash |= ((long)region.z & 0x3FFFFF) << 20;
 		return hash;
 	}
@@ -107,12 +105,6 @@ public:
 	 * Returns the used dimension of the world.
 	 */
 	Dimension getDimension() const;
-
-	/**
-	 * Returns/Sets the rotation of the world. You set this before loading the world.
-	 */
-	int getRotation() const;
-	void setRotation(int rotation);
 
 	/**
 	 * Returns/Sets the boundaries of the world. You also have to set this before
@@ -176,8 +168,7 @@ private:
 	// used dimension of the world
 	Dimension dimension;
 
-	// rotation and possible boundaries of the world
-	int rotation;
+	// boundaries of the world
 	WorldCrop world_crop;
 
 	// (hash-) set containing positions of available region files

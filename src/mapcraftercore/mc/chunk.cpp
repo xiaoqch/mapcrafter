@@ -18,113 +18,29 @@
  */
 
 #include "chunk.h"
-
 #include "blockstate.h"
+#include "../renderer/biomes.h"
+#include "../renderer/blockimages.h"
 
 #include <cmath>
 #include <iostream>
+#include <boost/range.hpp>
 
 namespace mapcrafter {
 namespace mc {
 
 namespace {
 
-void readPackedShorts(const std::vector<int64_t>& data, uint16_t* palette) {
-	// this is basically taken from Minecraft Overviewer
-	// https://github.com/gmcnew/Minecraft-Overviewer/blob/minecraft113/overviewer_core/world.py#L809
-	// maybe we can keep this, or maybe we could do something with unions for speed-up?
-	const uint8_t* b = reinterpret_cast<const uint8_t*>(&data.front());
-	int bits_per_entry = data.size() * 64 / (16*16*16);
-
-	unsigned int i = 0, j = 0;
-	while (i < data.size() * sizeof(int64_t)) {
-		if (bits_per_entry == 4) {
-			for (int k = 0; k < 4; k++) {
-				palette[j++] = b[i+k] & 0x0f;
-				palette[j++] = (b[i+k] & 0xf0) >> 4;
-			}
-			i += 4;
-		}
-		if (bits_per_entry == 5) {
-			palette[j++] =   b[i] & 0x1f;
-			palette[j++] = ((b[i+1] & 0x03) << 3) | ((b[i] & 0xe0) >> 5);
-			palette[j++] =  (b[i+1] & 0x7c) >> 2;
-			palette[j++] = ((b[i+2] & 0x0f) << 1) | ((b[i+1] & 0x80) >> 7);
-			palette[j++] = ((b[i+3] & 0x01) << 4) | ((b[i+2] & 0xf0) >> 4);
-			palette[j++] =  (b[i+3] & 0x3e) >> 1;
-			palette[j++] = ((b[i+4]   & 0x07) << 2) | ((b[i+3] & 0xc0) >> 6);
-			palette[j++] =  (b[i+4]   & 0xf8) >> 3;
-			i += 5;
-		}
-		if (bits_per_entry == 6) {
-			palette[j++] =  b[i] & 0x3f;
-			palette[j++] = ((b[i+1] & 0x0f) << 2) | ((b[i]   & 0xc0) >> 6);
-			palette[j++] = ((b[i+2] & 0x03) << 4) | ((b[i+1] & 0xf0) >> 4);
-			palette[j++] =  (b[i+2] & 0xfc) >> 2;
-			i += 3;
-		}
-		if (bits_per_entry == 7) {
-			palette[j++] = b[i] & 0x7f;
-			palette[j++] = ((b[i+1] & 0x3f) << 1) | ((b[i]   & 0x80) >> 7);
-			palette[j++] = ((b[i+2] & 0x1f) << 2) | ((b[i+1] & 0xc0) >> 6);
-			palette[j++] = ((b[i+3] & 0x0f) << 3) | ((b[i+2] & 0xe0) >> 5);
-			palette[j++] = ((b[i+4] & 0x07) << 4) | ((b[i+3] & 0xf0) >> 4);
-			palette[j++] = ((b[i+5] & 0x03) << 5) | ((b[i+4] & 0xf8) >> 3);
-			palette[j++] = ((b[i+6] & 0x01) << 6) | ((b[i+5] & 0xfc) >> 2);
-			palette[j++] =  (b[i+6] & 0xfe) >> 1;
-			i += 7;
-		}
-		if (bits_per_entry == 8) {
-			palette[j++] = b[i];
-			i += 1;
-		}
-		if (bits_per_entry == 9) {
-			palette[j++] = ((b[i+1] & 0x01) << 8) | b[0];
-			palette[j++] = ((b[i+2] & 0x03) << 7) | ((b[i+1] & 0xfe) >> 1);
-			palette[j++] = ((b[i+3] & 0x07) << 6) | ((b[i+2] & 0xfc) >> 2);
-			palette[j++] = ((b[i+4] & 0x0f) << 5) | ((b[i+3] & 0xf8) >> 3);
-			palette[j++] = ((b[i+5] & 0x1f) << 4) | ((b[i+4] & 0xf0) >> 4);
-			palette[j++] = ((b[i+6] & 0x3f) << 3) | ((b[i+5] & 0xe0) >> 5);
-			palette[j++] = ((b[i+7] & 0x7f) << 2) | ((b[i+6] & 0xc0) >> 6);
-			palette[j++] =  (b[i+8] << 1) | ((b[i+7] & 0x80) >> 7);
-			i += 9;
-		}
-		if (bits_per_entry == 10) {
-			palette[j++] = ((b[i+1] & 0x03) << 8) |   b[0];
-			palette[j++] = ((b[i+2] & 0x0f) << 6) | ((b[i+1] & 0xfc) >> 2);
-			palette[j++] = ((b[i+3] & 0x3f) << 4) | ((b[i+2] & 0xf0) >> 4);
-			palette[j++] =  (b[i+4] << 2)         | ((b[i+3] & 0xc0) >> 6);
-			i += 5;
-		}
-		if (bits_per_entry == 11) {
-			palette[j++] = ((b[i+1] & 0x07) << 8) |   b[0];
-			palette[j++] = ((b[i+2] & 0x3f) << 5) | ((b[i+1] & 0xf8) >> 3);
-			palette[j++] = ((b[i+4] & 0x01) << 10)| (b[i+3] << 2) | ((b[i+2] & 0xc0) >> 6);
-			palette[j++] = ((b[i+5] & 0x0f) << 7) | ((b[i+4] & 0xfe) >> 1);
-			palette[j++] = ((b[i+6] & 0x7f) << 4) | ((b[i+5] & 0xf0) >> 4);
-			palette[j++] = ((b[i+8] & 0x03) << 9) | (b[i+7] << 1) | ((b[i+6] & 0x80) >> 7);
-			palette[j++] = ((b[i+9] & 0x1f) << 2) | ((b[i+8] & 0xfc) >> 2);
-			palette[j++] =  (b[i+10]        << 3) | ((b[i+9] & 0xe0) >> 5);
-			i += 11;
-		}
-		if (bits_per_entry == 12) {
-			palette[j++] = ((b[i+1] & 0x0f) << 8) |   b[0];
-			palette[j++] =  (b[i+2]         << 4) | ((b[i+1] & 0xf0) >> 4);
-			i += 3;
-		}
-	}
-	assert(j == 16*16*16);
-}
-
-void readPackedShorts_v116(const std::vector<int64_t>& data, uint16_t* palette) {
-	uint32_t shorts_per_long = (4096 + data.size() - 1) / data.size();
+void readPackedShorts_v116(const std::vector<int64_t>& data, uint16_t* palette, uint16_t* palette_end) {
+	uint palette_size = palette_end - palette;
+	uint32_t shorts_per_long = (palette_size + data.size() - 1) / data.size();
 	uint32_t bits_per_value = 64 / shorts_per_long;
-	std::fill(palette, &palette[4096], 0);
+	std::fill(palette, &palette[palette_size], 0);
 	uint16_t mask = (1 << bits_per_value) - 1;
 
 	for (uint32_t i=0; i<shorts_per_long; i++) {
 		uint32_t j = 0;
-		for( uint32_t k=i; k<4096; k+=shorts_per_long) {
+		for( uint32_t k=i; k<palette_size; k+=shorts_per_long) {
 			assert(j < data.size());
 			palette[k] = (uint16_t)(data[j] >> (bits_per_value * i)) & mask;
 			j++;
@@ -135,16 +51,14 @@ void readPackedShorts_v116(const std::vector<int64_t>& data, uint16_t* palette) 
 
 } // namespace
 
+uint16_t Chunk::nop_id = 0;
+
 Chunk::Chunk()
-	: chunkpos(42, 42, 0), rotation(0), air_id(0) {
+	: chunkpos(42, 42) {
 	clear();
 }
 
 Chunk::~Chunk() {
-}
-
-void Chunk::setRotation(int rotation) {
-	this->rotation = rotation;
 }
 
 void Chunk::setWorldCrop(const WorldCrop& world_crop) {
@@ -159,6 +73,12 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 		nbt::Compression compression) {
 	clear();
 
+	// In case it wasn't set before
+	if (nop_id == 0) {
+		// The no operation block is the air block
+		nop_id = block_registry.getBlockID(mc::BlockState("minecraft:air"));
+	}
+
 	nbt::NBTFile nbt;
 	nbt.readNBT(data, len, compression);
 
@@ -169,7 +89,7 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 	}
 
 	int data_version = nbt.findTag<nbt::TagInt>("DataVersion").payload;
-	if (data_version < 2865){
+	if (data_version < 2860){
 		LOG(ERROR) << "Chunk error: Unsupported chunk version, please upgrade.";
 		return false;
 	}
@@ -180,16 +100,13 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 		return false;
 	}
 
-	chunkpos_original = ChunkPos(nbt.findTag<nbt::TagInt>("xPos").payload,
-	                             nbt.findTag<nbt::TagInt>("zPos").payload,
-								 nbt.findTag<nbt::TagInt>("yPos").payload);
-	chunkpos = chunkpos_original;
-	if (rotation)
-		chunkpos.rotate(rotation);
+	chunkpos = ChunkPos(nbt.findTag<nbt::TagInt>("xPos").payload,
+	                             nbt.findTag<nbt::TagInt>("zPos").payload);
+	int chunk_lowest = nbt.findTag<nbt::TagInt>("yPos").payload;
 
 	// now we have the original chunk position:
 	// check whether this chunk is completely contained within the cropped world
-	chunk_completely_contained = world_crop.isChunkCompletelyContained(chunkpos_original);
+	chunk_completely_contained = world_crop.isChunkCompletelyContained(chunkpos);
 
 	if (nbt.hasTag<nbt::TagString>("Status")) {
 		const nbt::TagString& tag = nbt.findTag<nbt::TagString>("Status");
@@ -215,22 +132,40 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 		const nbt::TagCompound& section_tag = (*it)->cast<nbt::TagCompound>();
 
 		// make sure section is valid
-		if (!section_tag.hasTag<nbt::TagByte>("Y"))
+		if (!section_tag.hasTag<nbt::TagByte>("Y")
+			|| !section_tag.hasTag<nbt::TagCompound>("block_states")
+			|| !section_tag.hasTag<nbt::TagCompound>("biomes"))
 			continue;
 
+		// Check the Y
 		const nbt::TagByte& y = section_tag.findTag<nbt::TagByte>("Y");
-		if (y.payload < CHUNK_LOW || y.payload >= CHUNK_TOP )
+		if (y.payload < chunk_lowest || y.payload >= chunk_lowest+Y_CHUNKS_PER_REGION_FILE )
 			continue;
 
-		const nbt::TagLongArray& blockstates = section_tag.findTag<nbt::TagLongArray>("BlockStates");
+		const nbt::TagCompound& blockstates = section_tag.findTag<nbt::TagCompound>("block_states");
+		if (!blockstates.hasTag<nbt::TagList>("palette")
+			|| !blockstates.hasTag<nbt::TagLongArray>("data"))
+			continue;
 
-		const nbt::TagList& palette = section_tag.findTag<nbt::TagList>("Palette");
-		std::vector<mc::BlockState> palette_blockstates(palette.payload.size());
-		std::vector<uint16_t> palette_lookup(palette.payload.size());
+		const nbt::TagCompound& biomes = section_tag.findTag<nbt::TagCompound>("biomes");
+		if (!biomes.hasTag<nbt::TagList>("palette"))
+			continue;
 
-		size_t i = 0;
-		for (auto it2 = palette.payload.begin(); it2 != palette.payload.end(); ++it2, ++i) {
-			const nbt::TagCompound& entry = (*it2)->cast<nbt::TagCompound>();
+		// create a ChunkSection-object
+		ChunkSection section;
+		section.y = y.payload;
+
+		/**
+		 * Get the block states info
+		 */
+
+		// Depalettize block_states palette
+		const nbt::TagList& palettebs = blockstates.findTag<nbt::TagList>("palette");
+		std::vector<mc::BlockState> palette_blockstates(palettebs.payload.size());
+		std::vector<uint16_t> palette_blockstates_idx(palettebs.payload.size());
+		int i = 0;
+		for (auto pbsit = palettebs.payload.begin(); pbsit != palettebs.payload.end(); ++pbsit, ++i) {
+			nbt::TagCompound& entry = (*pbsit)->cast<nbt::TagCompound>();
 			const nbt::TagString& name = entry.findTag<nbt::TagString>("Name");
 
 			mc::BlockState block(name.payload);
@@ -243,47 +178,72 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 						block.setProperty(key, value);
 					}
 				}
-				// if (strcmp(name.payload,"minecraft:gilded_blackstone")==0) {
-				// 	LOG(INFO) << "Property (" << name.payload << "): " << block.getVariantDescription();
-				// }
 			}
 			palette_blockstates[i] = block;
-			palette_lookup[i] = block_registry.getBlockID(block);
+			palette_blockstates_idx[i] = block_registry.getBlockID(block);
 		}
 
-		// create a ChunkSection-object
-		ChunkSection section;
-		section.y = y.payload;
+		/**
+		 * Get the block states data
+		 */
 
-		if (section_tag.hasArray<nbt::TagIntArray>("Biomes", sizeof(ChunkSection::biomes))) {
-			const nbt::TagIntArray& biomes_tag = section_tag.findTag<nbt::TagIntArray>("Biomes");
-			std::copy(biomes_tag.payload.begin(), biomes_tag.payload.end(), section.biomes);
-		} else {
-			std::fill(section.biomes, section.biomes + sizeof(ChunkSection::biomes), 21 /* DEFAULT_BIOME */);
-		}
+		const nbt::TagLongArray& databs = blockstates.findTag<nbt::TagLongArray>("data");
+		readPackedShorts_v116(databs.payload, section.block_ids, &section.block_ids[boost::size(section.block_ids)]);
 
-		int bits_per_entry = blockstates.payload.size() * 64 / (16*16*16);
 		bool ok = true;
 		for (size_t i = 0; i < 16*16*16; i++) {
 			if (section.block_ids[i] >= palette_blockstates.size()) {
+				int bits_per_entry = databs.payload.size() * 64 / (16*16*16);
 				LOG(ERROR) << "Incorrectly parsed palette ID " << section.block_ids[i]
 					<< " at index " << i << " (max is " << palette_blockstates.size()-1
 					<< " with " << bits_per_entry << " bits per entry)";
 				ok = false;
 				break;
 			}
-			section.block_ids[i] = palette_lookup[section.block_ids[i]];
+			section.block_ids[i] = palette_blockstates_idx[section.block_ids[i]];
 		}
 		if (!ok) {
 			continue;
 		}
 
-		if (section_tag.hasArray<nbt::TagByteArray>("BlockLight", 2048)) {
+		// Get the biome data
+		const nbt::TagList& paletteb = biomes.findTag<nbt::TagList>("palette");
+		if (paletteb.payload.size()>1) {
+			// More than one biome: there must be data and palette size > 1
+			if (!biomes.hasTag<nbt::TagLongArray>("data"))
+				continue;
+			const nbt::TagLongArray& databiomes = biomes.findTag<nbt::TagLongArray>("data");
+			readPackedShorts_v116(databiomes.payload, section.biomes, &section.biomes[boost::size(section.biomes)]);
+
+			std::vector<uint16_t> palette_biomes(paletteb.payload.size());
+			int i = 0;
+			for (auto pbit = paletteb.payload.begin(); pbit != paletteb.payload.end(); ++pbit, ++i) {
+				nbt::TagString& biome = (*pbit)->cast<nbt::TagString>();
+				palette_biomes[i] = mapcrafter::renderer::Biome::getBiomeId(biome.payload);
+			}
+			// Convert chunk local index into the global biome index
+			for (i = 0; i < boost::size(section.biomes); ++i) {
+				uint16_t idx = section.biomes[i];
+				// Make sure we stay in the array, if it happens, use the default biome
+				if (idx>=palette_biomes.size()) idx = 0;
+				section.biomes[i] = palette_biomes[idx];
+			}
+		} else if (paletteb.payload.size()==1) {
+			// Only 1 in palette: It's only this biome in this chunk
+			nbt::TagString& biome = (*paletteb.payload.begin())->cast<nbt::TagString>();
+			std::fill(section.biomes, section.biomes+boost::size(section.biomes), mapcrafter::renderer::Biome::getBiomeId(biome.payload));
+		} else {
+			// No palette, this shouldn't happen, anyway let's use the default one
+			std::fill(section.biomes, section.biomes+boost::size(section.biomes), 0);
+		}
+
+		if (section_tag.hasArray<nbt::TagByteArray>("BlockLight")) {
 			const nbt::TagByteArray& block_light = section_tag.findTag<nbt::TagByteArray>("BlockLight");
 			std::copy(block_light.payload.begin(), block_light.payload.end(), section.block_light);
 		} else {
 			std::fill(&section.block_light[0], &section.block_light[2048], 0);
 		}
+
 		if (section_tag.hasArray<nbt::TagByteArray>("SkyLight", 2048)) {
 			const nbt::TagByteArray& sky_light = section_tag.findTag<nbt::TagByteArray>("SkyLight");
 			std::copy(sky_light.payload.begin(), sky_light.payload.end(), section.sky_light);
@@ -292,7 +252,7 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 		}
 
 		// add this section to the section list
-		section_offsets[section.y-CHUNK_LOW] = sections.size();
+		section_offsets[section.y-CHUNK_LOWEST] = sections.size();
 		sections.push_back(section);
 	}
 
@@ -301,71 +261,61 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 
 void Chunk::clear() {
 	sections.clear();
-	for (int i = 0; i < sizeof(section_offsets)/sizeof(section_offsets[0]); i++)
+	for (int i = 0; i < boost::size(section_offsets); i++)
 		section_offsets[i] = -1;
-	// std::fill(biomes, biomes + 256, 21 /* DEFAULT_BIOME */);
-
 }
 
-bool Chunk::hasSection(int section) const {
-	return section >= CHUNK_LOW && section < CHUNK_TOP && section_offsets[section-CHUNK_LOW] != -1;
+bool Chunk::hasSection(int y) const {
+	const ChunkSection* cs = this->getSection(y);
+	return cs != NULL;
 }
 
-int Chunk::getSectionIndex(int y) const {
+const ChunkSection* Chunk::getSection(int y) const {
 	int idx = y >> 4;
-	if( idx < CHUNK_LOW || idx >= CHUNK_TOP) {
-		return -1;
+	if( idx < CHUNK_LOWEST || idx >= CHUNK_HIGHEST) {
+		return NULL;
 	}
-	return y - CHUNK_LOW;
-}
-
-void rotateBlockPos(int& x, int& z, int rotation) {
-	int nx = x, nz = z;
-	for (int i = 0; i < rotation; i++) {
-		nx = z;
-		nz = 15 - x;
-		x = nx;
-		z = nz;
+	// Convert index to index into the data array
+	idx = section_offsets[idx - CHUNK_LOWEST];
+	if( idx < 0 || idx >= sections.size()) {
+		return NULL;
 	}
+	return &sections[idx];
 }
 
 uint16_t Chunk::getBlockID(const LocalBlockPos& pos, bool force) const {
-	// at first find out the section and check if it's valid and contained
-	int section = pos.y >> 4;
-	if (section < CHUNK_LOW || section >= CHUNK_TOP || section_offsets[section-CHUNK_LOW] == -1)
-		return air_id;
+	const ChunkSection* cs = getSection(pos.y);
+	if (!cs)
+		return nop_id;
 
-	// if rotated: rotate position to position with original rotation
 	int x = pos.x;
 	int z = pos.z;
-	if (rotation)
-		rotateBlockPos(x, z, rotation);
 
 	// check whether this block is really rendered
 	if (!checkBlockWorldCrop(x, z, pos.y))
-		return air_id;
+		return nop_id;
 
 	// calculate the offset and get the block ID
 	// and don't forget the add data
-	int offset = ((pos.y & 15) * 16 + z) * 16 + x;
-	uint16_t id = sections[section_offsets[section-CHUNK_LOW]].block_ids[offset];
+	int offset = ((pos.y & 15) * 256) + (z * 16) + x;
+	uint16_t id = cs->block_ids[offset];
 	if (!force && world_crop.hasBlockMask()) {
 		const BlockMask* mask = world_crop.getBlockMask();
 		BlockMask::BlockState block_state = mask->getBlockState(id);
 		if (block_state == BlockMask::BlockState::COMPLETELY_HIDDEN)
-			return air_id;
+			return nop_id;
 		else if (block_state == BlockMask::BlockState::COMPLETELY_SHOWN)
 			return id;
 		if (mask->isHidden(id, 0 /*getBlockData(pos, true)*/))
-			return air_id;
+			return nop_id;
 	}
 	return id;
 }
 
 bool Chunk::checkBlockWorldCrop(int x, int z, int y) const {
 	// now about the actual world cropping:
-	// get the global position of the block, with the original world rotation
-	BlockPos global_pos = LocalBlockPos(x, z, y).toGlobalPos(chunkpos_original);
+	// get the global position of the block
+	BlockPos global_pos = LocalBlockPos(x, z, y).toGlobalPos(chunkpos);
 	// check whether the block is contained in the y-bounds.
 	if (!world_crop.isBlockContainedY(global_pos))
 		return false;
@@ -376,18 +326,14 @@ bool Chunk::checkBlockWorldCrop(int x, int z, int y) const {
 }
 
 uint8_t Chunk::getData(const LocalBlockPos& pos, int array, bool force) const {
-	// at first find out the section and check if it's valid and contained
-	int section = pos.y >> 4;
-	if (section < CHUNK_LOW || section >= CHUNK_TOP || section_offsets[section-CHUNK_LOW] == -1) {
+	const ChunkSection* cs = getSection(pos.y);
+	if (!cs) {
 		 // not existing sections should always have skylight
 		 return array == 1 ? 15 : 0;
 	}
 
-	// if rotated: rotate position to position with original rotation
 	int x = pos.x;
 	int z = pos.z;
-	if (rotation)
-		 rotateBlockPos(x, z, rotation);
 
 	// check whether this block is really rendered
 	if (!checkBlockWorldCrop(x, z, pos.y)) {
@@ -396,12 +342,12 @@ uint8_t Chunk::getData(const LocalBlockPos& pos, int array, bool force) const {
 
 	uint8_t data = 0;
 	// calculate the offset and get the block data
-	int offset = ((pos.y & 15) * 16 + z) * 16 + x;
+	int offset = ((pos.y & 15) * 256) + (z * 16) + x;
 	// handle bottom/top nibble
 	if ((offset % 2) == 0)
-		 data = sections[section_offsets[section-CHUNK_LOW]].getArray(array)[offset / 2] & 0xf;
+		 data = cs->getArray(array)[offset / 2] & 0xf;
 	else
-		 data = (sections[section_offsets[section-CHUNK_LOW]].getArray(array)[offset / 2] >> 4) & 0x0f;
+		 data = (cs->getArray(array)[offset / 2] >> 4) & 0x0f;
 	if (!force && world_crop.hasBlockMask()) {
 		 const BlockMask* mask = world_crop.getBlockMask();
 		 if (mask->isHidden(getBlockID(pos, true), data)) {
@@ -419,21 +365,16 @@ uint8_t Chunk::getSkyLight(const LocalBlockPos& pos) const {
 	return getData(pos, 1);
 }
 
-uint8_t Chunk::getBiomeAt(const LocalBlockPos& pos) const {
-	// at first find out the section and check if it's valid and contained
-	int section = getSectionIndex(pos.y);
-	if (section < 0)
-		return 0;
+uint16_t Chunk::getBiomeAt(const LocalBlockPos& pos) const {
+	const ChunkSection* cs = getSection(pos.y);
+	if (!cs)
+		return renderer::DEFAULT_BIOME_ID;
 
-	int x = pos.x / 4;
-	int z = pos.z / 4;
-	int y = (pos.y - CHUNK_LOW*16) / 4;
-	assert(y>= 0 && y<(CHUNK_TOP-CHUNK_LOW)*16/4);
+	int x = pos.x >> 2;
+	int z = pos.z >> 2;
+	int y = pos.y >> 2;
 
-	if (rotation)
-		rotateBlockPos(x, z, rotation);
-
-	return 0; //sections[section]->biomes[(z * 4 + x)];
+	return cs->biomes[(y << 4) + (z << 2) + x];
 }
 
 const ChunkPos& Chunk::getPos() const {

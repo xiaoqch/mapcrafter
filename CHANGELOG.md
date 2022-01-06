@@ -1,5 +1,35 @@
 # Mapcrafter version history
 
+**v.3.1 WIP**
+
+* Support for 1.18.x
+  * Breaking change, doesn't support the old chunk format anymore (sorry, :( no time to develop a dynamic convertion of old Minecraft file format)
+  * Chunks height supoprted from -64 to 319 included.
+  * Support new biome palette
+  * Biomes now identified by their name, no more by ID
+* Add support for alternate block rotation, improving overall visual, breaking monotonous flat surfaces
+* Block atlas, now palettized to minimize memory footprint and disk space
+* Performance improvements:
+  * Region header IO operations reduced from 4098 to 4 calls.
+  * Rendering reworked by separating block render and water layer
+  * World rotation now supported on the rendering layer, no more world data rotation
+* Bug fixes:
+  * Side view of waterloged block wasn't rendering side water
+* Still to be worked on:
+  * Textures misplaced on some blocks (ex: cauldron, glass, ...)
+  * rotation to fix
+  * lighting on edges funky
+  * biome color not right
+  * Blockcrafter:
+    * face sorting in blockcrafter to minimize Z-fighting
+    * Missing block types:
+      * Banners (doable?)
+      * end gate
+      * standard heads (skeleton, player, wither skeleton, creeper, dragon)
+      * Candle + cake, faces not properly placed
+      * Lit candles don't have flames
+    * UV's rotation not right in some circonstances
+
 **v.3.0**
 
 * Add support for Minecraft versions 1.13 through 1.16 (#279)

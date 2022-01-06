@@ -19,6 +19,8 @@
 
 #include "tilerenderer.h"
 
+#include <boost/range/algorithm/sort.hpp>
+
 #include "blockimages.h"
 #include "rendermode.h"
 #include "renderview.h"
@@ -31,21 +33,25 @@
 namespace mapcrafter {
 namespace renderer {
 
-bool TileImage::operator<(const TileImage& other) const {
-	if (pos == other.pos) {
-		return z_index < other.z_index;
-	}
-	return pos < other.pos;
-}
-
 TileRenderer::TileRenderer(const RenderView* render_view, mc::BlockStateRegistry& block_registry,
-		BlockImages* images, int tile_width, mc::WorldCache* world, RenderMode* render_mode)
-	: block_registry(block_registry), images(images), block_images(dynamic_cast<RenderedBlockImages*>(images)),
-	  tile_width(tile_width), world(world), current_chunk(nullptr),
-	  render_mode(render_mode),
-	  render_biomes(true), shadow_edges({0, 0, 0, 0, 0}) {
+		BlockImages* images, int tile_width, mc::WorldCache* world, RenderMode* render_mode) :
+		block_registry(block_registry), images(images), block_images(dynamic_cast<RenderedBlockImages*>(images)),
+		tile_width(tile_width), world(world), current_chunk(nullptr),
+		render_mode(render_mode), render_view(render_view),
+		render_biomes(true), shadow_edges({0, 0, 0, 0, 0}),
+		waterlog_full_image(
+			block_images->getBlockImage(
+				block_registry.getBlockID(
+					mc::BlockState::parse("minecraft:water_mask", "level=0")))),
+		waterlog_shore_image(
+			block_images->getBlockImage(
+				block_registry.getBlockID(
+					mc::BlockState::parse("minecraft:water_mask", "level=2" )))),
+		tile_image(waterlog_full_image.image().width, waterlog_full_image.image().height),
+		waterLogTinted(tile_image.image.width, tile_image.image.height) {
 	assert(block_images);
 	render_mode->initialize(render_view, images, world, &current_chunk);
+	// Pre-allocate rendering buffers
 }
 
 TileRenderer::~TileRenderer() {
@@ -59,11 +65,60 @@ void TileRenderer::setShadowEdges(std::array<uint8_t, 5> shadow_edges) {
 	this->shadow_edges = shadow_edges;
 }
 
+TileRenderer::cmpBlockPos* TileRenderer::getTileComparator() const {
+	switch ((RenderRotation::Direction)render_view->getRotation()){
+	default:
+	case RenderRotation::TOP_LEFT:
+		return [](const TileImage& a, const TileImage& b) -> bool {
+			return
+				(a.pos.y != b.pos.y) ? (a.pos.y < b.pos.y) : (
+				(a.pos.z != b.pos.z) ? (a.pos.z < b.pos.z) : (
+				(a.pos.x != b.pos.x) ? (a.pos.x > b.pos.x) : (
+					false
+				)));
+		};
+		break;
+	case RenderRotation::TOP_RIGHT:
+		return [](const TileImage& a, const TileImage& b) -> bool {
+			return
+				(a.pos.y != b.pos.y) ? (a.pos.y < b.pos.y) : (
+				(a.pos.x != b.pos.x) ? (a.pos.x < b.pos.x) : (
+				(a.pos.z != b.pos.z) ? (a.pos.z < b.pos.z) : (
+					false
+				)));
+		};
+		break;
+	case RenderRotation::BOTTOM_RIGHT:
+		return [](const TileImage& a, const TileImage& b) -> bool {
+			return
+				(a.pos.y != b.pos.y) ? (a.pos.y < b.pos.y) : (
+				(a.pos.z != b.pos.z) ? (a.pos.z > b.pos.z) : (
+				(a.pos.x != b.pos.x) ? (a.pos.x < b.pos.x) : (
+					false
+				)));
+		};
+		break;
+	case RenderRotation::BOTTOM_LEFT:
+		return [](const TileImage& a, const TileImage& b) -> bool {
+			return
+				(a.pos.y != b.pos.y) ? (a.pos.y < b.pos.y) : (
+				(a.pos.x != b.pos.x) ? (a.pos.x > b.pos.x) : (
+				(a.pos.z != b.pos.z) ? (a.pos.z > b.pos.z) : (
+					false
+				)));
+		};
+		break;
+	}
+}
+
 void TileRenderer::renderTile(const TilePos& tile_pos, RGBAImage& tile) {
 	tile.setSize(getTileWidth(), getTileHeight());
 
-	std::set<TileImage> tile_images;
+	boost::container::vector<TileImage> tile_images;
 	renderTopBlocks(tile_pos, tile_images);
+
+	// Sort them in order depending of the rotation
+	boost::range::sort(tile_images, getTileComparator());
 
 	for (auto it = tile_images.begin(); it != tile_images.end(); ++it) {
 		tile.alphaBlit(it->image, it->x, it->y);
@@ -78,25 +133,9 @@ int TileRenderer::getTileHeight() const {
 	return getTileSize();
 }
 
-void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockPos& dir, std::set<TileImage>& tile_images) {
-	// const int water_id =
-	// 	block_registry.getBlockID(
-	// 		mc::BlockState("minecraft:water"));
-	// const BlockImage& waterlog_image =
-	// 	block_images->getBlockImage(
-	// 		block_registry.getBlockID(
-	// 			mc::BlockState::parse("minecraft:water_mask", "level=8")));
-	const BlockImage& waterlog_full_image =
-		block_images->getBlockImage(
-			block_registry.getBlockID(
-				mc::BlockState::parse("minecraft:water_mask", "level=7")));
+void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockPos& dir, boost::container::vector<TileImage>& tile_images) {
 
-	// Pre-allocate rendering buffers
-	TileImage tile_image;
-	tile_image.image.setSize(waterlog_full_image.image().width, waterlog_full_image.image().height);
-	RGBAImage waterLogTinted(tile_image.image.width, tile_image.image.height);
-
-	for (; top.y >= mc::CHUNK_LOW*16 ; top += dir) {
+	for (; top.y >= mc::CHUNK_LOWEST*16 ; top += dir) {
 		// get current chunk position
 		mc::ChunkPos current_chunk_pos(top);
 
@@ -114,7 +153,8 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 		// get local block position
 		mc::LocalBlockPos local(top);
 
-		uint16_t id = current_chunk->getBlockID(local);
+		uint16_t id = current_chunk->getBlockID(local, false);
+		if (id == mc::Chunk::nop_id) continue;
 		const BlockImage* block_image = &block_images->getBlockImage(id);
 
 		// Early rejection if nothing to draw
@@ -124,37 +164,47 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 		}
 
 		// What's on each side ?
-		uint16_t id_top   = current_chunk->getBlockID(mc::LocalBlockPos(local.x,local.z,local.y+1));
-		uint16_t id_south = getBlock(top + mc::DIR_SOUTH).id;
-		uint16_t id_west  = getBlock(top + mc::DIR_WEST).id;
-		const BlockImage* block_image_top = &block_images->getBlockImage(id_top);
-		const BlockImage* block_image_south = &block_images->getBlockImage(id_south);
-		const BlockImage* block_image_west = &block_images->getBlockImage(id_west);
+		uint16_t id_top   = current_chunk->getBlockID(mc::LocalBlockPos(local.x,local.z,local.y+1), true);
+		uint16_t id_south = getBlock(top + render_view->getRotation().getSouth()).id;
+		uint16_t id_west  = getBlock(top + render_view->getRotation().getWest()).id;
 
-		auto is_full_water = [](const BlockImage* b) -> bool {
-			return b->is_empty &&
-				b->is_waterlogged;
-		};
-		auto is_waterlogged = [](const BlockImage* b) -> bool {
-			return b->is_waterlogged;
-		};
+		// Try an early rejection if full_water with waterloged neighbours
+		bool solid_top;
+		bool water_top;
+		bool water_south;
+		bool water_west;
+		if (block_image->is_waterlogged) {
+			const BlockImage* block_image_top = &block_images->getBlockImage(id_top);
+			const BlockImage* block_image_south = &block_images->getBlockImage(id_south);
+			const BlockImage* block_image_west = &block_images->getBlockImage(id_west);
 
-		bool water_top = is_waterlogged(block_image_top);
-		bool water_south = is_waterlogged(block_image_south);
-		bool water_west = is_waterlogged(block_image_west);
+			auto is_full_water = [](const BlockImage* b) -> bool {
+				return b->is_empty &&
+					b->is_waterlogged;
+			};
+			auto is_waterlogged = [](const BlockImage* b) -> bool {
+				return b->is_waterlogged;
+			};
 
-		// Early rejection if water with waterloged with neighbours
-		if (is_full_water(block_image)
-			&& water_top
-			&& water_south
-			&& water_west)
-			continue;
+			water_top = is_waterlogged(block_image_top);
+			water_south = is_waterlogged(block_image_south);
+			water_west = is_waterlogged(block_image_west);
 
-		// Retrieve the image to print
-		// mc::BlockPos global_pos = mc::LocalBlockPos(local.x, local.z, local.y).toGlobalPos(current_chunk->getPos());
-		// MCRandom rnd(global_pos.x,global_pos.y,global_pos.z);
-		MCRandom rnd(local.x,local.y,local.z);
-		int alt = 0; // abs(rnd.nextLong());
+			if (is_full_water(block_image)
+				&& water_top
+				&& water_south
+				&& water_west)
+				continue;
+
+			solid_top = !block_image_top->is_transparent;
+		}
+
+		// Retrieve the image to print. Not exactly how it's rendered in Minecraft, but still does the block variation correctly
+		int alt = 0;
+		if (block_image->images_idx.size() != 1) {
+			MCRandom rnd(top.x,top.y,top.z);
+			alt = abs(rnd.nextLong());
+		}
 		const RGBAImage& image = block_image->image(alt);
 		const RGBAImage& uv_image = block_image->uv_image(alt);
 
@@ -162,7 +212,6 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 		tile_image.x = x;
 		tile_image.y = y;
 		tile_image.pos = top;
-		tile_image.z_index = 0;
 		tile_image.image.setSize(image.width,image.height);
 
 		// Only display if there's something to print
@@ -173,15 +222,15 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			bool strip_up = false;
 			bool strip_left = false;
 			bool strip_right = false;
-			if (block_image->can_partial) {
-				strip_up    = id == id_top;
-				strip_right = id == id_south;
-				strip_left  = id == id_west;
-			} else if (!block_image->is_transparent) {
-				strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
-				strip_right = block_images->getBlockImage(id_south).is_transparent == false;
-				strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
-			}
+			// if (block_image->can_partial) {
+			// 	strip_up    = id == id_top;
+			// 	strip_right = id == id_south;
+			// 	strip_left  = id == id_west;
+			// } else if (!block_image->is_transparent) {
+			// 	strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
+			// 	strip_right = block_images->getBlockImage(id_south).is_transparent == false;
+			// 	strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
+			// }
 
 			if (strip_up || strip_left || strip_right) {
 				for (int i=0; i<tile_image.image.width*tile_image.image.height; i++) {
@@ -220,23 +269,18 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 		}
 
 		if (block_image->is_waterlogged) {
-			assert( !(water_top && water_south && water_west) );
+			// assert( !(water_top && water_south && water_west) );
 
 			const RGBAImage* waterlog;
 			const RGBAImage* waterlog_uv;
-			if (water_top) {
+			if (water_top || solid_top) {
 				// This will be displayed as full water
 				waterlog = &waterlog_full_image.image();
 				waterlog_uv = &waterlog_full_image.uv_image();
 			} else {
-				std::string level = "6"; //block_registry.getBlockState(id).getProperty("level", "4");
-				const BlockImage& waterlog_image =
-					block_images->getBlockImage(
-						block_registry.getBlockID(
-							mc::BlockState::parse("minecraft:water_mask", std::string("level=")+level )));
 				// That one will be displayed a bit lower to look like a shore line
-				waterlog = &waterlog_image.image();
-				waterlog_uv = &waterlog_image.uv_image();
+				waterlog = &waterlog_shore_image.image();
+				waterlog_uv = &waterlog_shore_image.uv_image();
 			}
 
 			uint32_t biome_color = getBiomeColor(top, waterlog_full_image, current_chunk);
@@ -245,25 +289,23 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			std::vector<RGBAPixel>::const_iterator pit      = waterlog->data.begin();
 			std::vector<RGBAPixel>::const_iterator pitend   = waterlog->data.end();
 			std::vector<RGBAPixel>::const_iterator puvit    = waterlog_uv->data.begin();
-			// std::vector<RGBAPixel>::const_iterator pimguvit = uv_image.data.begin();
 			std::vector<RGBAPixel>::iterator pdestit        = waterLogTinted.data.begin();
 
-			// if ((water_top || water_south || water_west) == false) {
-			// 	// fast lane
-			// 	// Nothing to clip, just render the whole water block with biome color
-			// 	while (pit != pitend)
-			// 	{
-			// 		RGBAPixel p = *pit;
-			// 		if (p) {
-			// 			p = rgba_multiply(p, biome_color);
-			// 		}
-			// 		*pdestit = p;
-			// 		pit ++;
-			// 		puvit ++;
-			// 		pimguvit ++;
-			// 		pdestit ++;
-			// 	}
-			// } else {
+			if ((water_top || water_south || water_west) == false) {
+				// fast lane
+				// Nothing to clip, just render the whole water block with biome color
+				while (pit != pitend)
+				{
+					RGBAPixel p = *pit;
+					if (p) {
+						p = rgba_multiply(p, biome_color);
+					}
+					*pdestit = p;
+					pit ++;
+					puvit ++;
+					pdestit ++;
+				}
+			} else {
 				// Clip the some faces, and multiply by biome color
 				while (pit != pitend)
 				{
@@ -294,21 +336,9 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 					*pdestit = p;
 					pit ++;
 					puvit ++;
-					// pimguvit ++;
 					pdestit ++;
 				}
-			// }
-
-		// if (rgba_alpha(uv_pixel) < rgba_alpha(top_uv_pixel)) {
-		// 	blend(pixel, top_pixel);
-		// } else {
-		// 	// The top pixel is behind the block one, so use the alpha of
-		// 	// the destination pixel to blend the top pixel behind
-		// 	RGBAPixel tmp_pix = pixel;
-		// 	pixel = top_pixel;
-		// 	blend(pixel, tmp_pix);
-		// }
-
+			}
 
 			blockImageBlendZBuffered(tile_image.image, uv_image, waterLogTinted, *waterlog_uv);
 		}
@@ -319,11 +349,11 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 				//return b.is_transparent && !(b.is_waterlogged || b.is_waterlogged);
 				return b.shadow_edges == 0;
 			};
-			uint8_t north = shadow_edges[0] && shadow_edge(mc::DIR_NORTH);
-			uint8_t south = shadow_edges[1] && shadow_edge(mc::DIR_SOUTH);
-			uint8_t east = shadow_edges[2] && shadow_edge(mc::DIR_EAST);
-			uint8_t west = shadow_edges[3] && shadow_edge(mc::DIR_WEST);
-			uint8_t bottom = shadow_edges[4] && shadow_edge(mc::DIR_BOTTOM);
+			uint8_t north = shadow_edges[0] && shadow_edge(render_view->getRotation().getNorth());
+			uint8_t south = shadow_edges[1] && shadow_edge(render_view->getRotation().getSouth());
+			uint8_t east = shadow_edges[2] && shadow_edge(render_view->getRotation().getEast());
+			uint8_t west = shadow_edges[3] && shadow_edge(render_view->getRotation().getWest());
+			uint8_t bottom = shadow_edges[4] && shadow_edge(render_view->getRotation().getBottom());
 
 			if (north + south + east + west + bottom != 0) {
 				int f = block_image->shadow_edges;
@@ -340,7 +370,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 		// let the render mode do their magic with the block image
 		//render_mode->draw(node.image, node.pos, id, data);
 		render_mode->draw(tile_image.image, *block_image, tile_image.pos, id);
-		tile_images.insert(tile_image);
+		tile_images.push_back(tile_image);
 
 		// if this block is not transparent, then stop looking for more blocks
 		if (!block_image->is_transparent) {
@@ -375,7 +405,7 @@ uint32_t TileRenderer::getBiomeColor(const mc::BlockPos& pos, const BlockImage& 
 			} else {
 				biome_id = chunk->getBiomeAt(local);
 			}
-			Biome biome = getBiome(biome_id);
+			const Biome& biome = Biome::getBiome(biome_id);
 			uint32_t c = biome.getColor(other, block.biome_color, block.biome_colormap);
 			r += (float) rgba_red(c);
 			g += (float) rgba_green(c);
@@ -383,7 +413,8 @@ uint32_t TileRenderer::getBiomeColor(const mc::BlockPos& pos, const BlockImage& 
 		}
 	}
 
-	return rgba(r / f, g / f, b / f, 255);
+	f = 1.0 / f;
+	return rgba(r * f, g * f, b * f, 255);
 }
 
 }

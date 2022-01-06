@@ -21,6 +21,7 @@
 #define RENDERVIEW_H_
 
 #include "../config.h"
+#include "renderrotation.h"
 
 #include <iostream>
 
@@ -52,6 +53,7 @@ class TileRenderer;
 
 class RenderView {
 public:
+	RenderView(const RenderRotation& rotation);
 	virtual ~RenderView();
 
 	/**
@@ -100,6 +102,12 @@ public:
 	virtual void configureTileRenderer(TileRenderer* tile_renderer,
 			const config::WorldSection& world_config,
 			const config::MapSection& map_config) const;
+
+	const RenderRotation& getRotation() const { return rotation; }
+
+private:
+	// The rotation
+	const RenderRotation& rotation;
 };
 
 enum class RenderViewType {
@@ -115,7 +123,7 @@ std::ostream& operator<<(std::ostream& out, RenderViewType render_view);
 /**
  * Creates a render view of the specified type. Won't return a nullptr.
  */
-RenderView* createRenderView(RenderViewType render_view);
+RenderView* createRenderView(RenderViewType render_view, const RenderRotation& rotation);
 
 } /* namespace renderer */
 } /* namespace mapcrafter */

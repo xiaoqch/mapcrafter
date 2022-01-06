@@ -36,38 +36,39 @@
 namespace mapcrafter {
 namespace mc {
 
-const int CHUNK_Y_LOWEST = -4;
-
+/**
+ * @brief RegionPos holds the position of a region in absolute coordinate in the world. The X and Z values are
+ * used to set the filename, therefore are absolute world coordinates divided by 512 (16*32).
+ */
 class RegionPos {
 public:
-	int x, z, y;
-	int org_x, org_z;
+	int x, z;
 
 	RegionPos();
-	RegionPos(int x, int z, int y);
+	RegionPos(int x, int z);
 
 	bool operator==(const RegionPos& other) const;
 	bool operator!=(const RegionPos& other) const;
 	bool operator<(const RegionPos& other) const;
 
 	static RegionPos byFilename(const std::string& filename);
-
-	void rotate(int count);
 };
 
 class BlockPos;
 
+/**
+ * @brief ChunkPos points to a position in a chunk. Therefore X and Z are never bigger than 15 or lower than 0.
+   * However Y is still an absolute world Y as chunkas are not delimited in height. (yet...)
+ */
 class ChunkPos {
 public:
-	int x, z, y;
-	int org_x, org_z;
+	int x, z;
 
 	ChunkPos();
-	ChunkPos(int x, int z, int y);
+	ChunkPos(int x, int z);
 	ChunkPos(const BlockPos& block);
 
 	int getLocalX() const;
-	int getLocalY() const;
 	int getLocalZ() const;
 
 	RegionPos getRegion() const;
@@ -75,16 +76,13 @@ public:
 	bool operator==(const ChunkPos& other) const;
 	bool operator!=(const ChunkPos& other) const;
 	bool operator<(const ChunkPos& other) const;
-
-	int getRow() const;
-	int getCol() const;
-	static ChunkPos byRowCol(int row, int col, int height);
-
-	void rotate(int count);
 };
 
 class LocalBlockPos;
 
+/**
+ * @brief BlockPos are absolute coordinate of a block in the world.
+ */
 class BlockPos {
 public:
 	int x, z, y;
@@ -92,12 +90,8 @@ public:
 	BlockPos();
 	BlockPos(int x, int z, int y);
 
-	int getRow() const;
-	int getCol() const;
-
 	bool operator==(const BlockPos& other) const;
 	bool operator!=(const BlockPos& other) const;
-	bool operator<(const BlockPos& other) const;
 
 	BlockPos& operator+=(const BlockPos& p);
 	BlockPos& operator-=(const BlockPos& p);
@@ -107,6 +101,10 @@ public:
 
 extern const mc::BlockPos DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST, DIR_TOP, DIR_BOTTOM;
 
+/**
+ * @brief LocalBlockPos provides local coordinates inside a ChunkSection, which is a 16x16x16 world section.
+ * All 3 coordinates are between 0 and 15 included.
+ */
 class LocalBlockPos {
 public:
 	int x, z, y;
@@ -115,20 +113,12 @@ public:
 	LocalBlockPos(int x, int z, int y);
 	LocalBlockPos(const BlockPos& pos);
 
-	int getRow() const;
-	int getCol() const;
-
 	BlockPos toGlobalPos(const ChunkPos& chunk) const;
-
-	LocalBlockPos& above() const;
-	LocalBlockPos& below() const;
-
-	bool operator<(const LocalBlockPos& other) const;
 };
 
+std::ostream& operator<<(std::ostream& stream, const BlockPos& block);
 std::ostream& operator<<(std::ostream& stream, const RegionPos& region);
 std::ostream& operator<<(std::ostream& stream, const ChunkPos& chunk);
-std::ostream& operator<<(std::ostream& stream, const BlockPos& block);
 std::ostream& operator<<(std::ostream& stream, const LocalBlockPos& block);
 
 }

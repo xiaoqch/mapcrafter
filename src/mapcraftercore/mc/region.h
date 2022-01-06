@@ -51,11 +51,6 @@ public:
 	~RegionFile();
 
 	/**
-	 * Sets the rotation of the world. You have to call this before loading a world.
-	 */
-	// void setRotation(int rotation);
-
-	/**
 	 * Sets the boundaries of the world.
 	 */
 	void setWorldCrop(const WorldCrop& world_crop);
@@ -135,20 +130,23 @@ public:
 	 */
 	int loadChunk(const ChunkPos& pos, BlockStateRegistry& block_registry, Chunk& chunk);
 
+	/**
+	 * Loads the lowest Y value to bound the world to finite values.
+	 * Returns as integer the lowest Y coordinate.
+	 */
+	int lowestY();
+
 private:
 	std::string filename;
-	RegionPos regionpos, regionpos_original;
+	RegionPos regionpos;
 
-	// rotation of the region file
-	// int rotation;
-	// and possible boundaries of the world
+	// possible boundaries of the world
 	WorldCrop world_crop;
 
 	// a set with all available chunks
 	ChunkMap containing_chunks;
 
 	// indexes of the following arrays are chunk coordinates: z*32 + x
-	// where x and z are the original local chunk coordinates -- not the rotated ones
 
 	// available chunks also as array
 	bool chunk_exists[1024];
@@ -167,7 +165,6 @@ private:
 
 	/**
 	 * Calculates the index (chunk_* arrays) for a specific chunks.
-	 * The chunk position is rotated to the original rotation if the region is rotated.
 	 */
 	size_t getChunkIndex(const mc::ChunkPos& chunkpos) const;
 };

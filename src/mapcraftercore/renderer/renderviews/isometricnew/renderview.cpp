@@ -38,7 +38,7 @@ BlockImages* NewIsometricRenderView::createBlockImages(mc::BlockStateRegistry& b
 }
 
 TileSet* NewIsometricRenderView::createTileSet(int tile_width) const {
-	return new NewIsometricTileSet(tile_width);
+	return new NewIsometricTileSet(tile_width, getRotation());
 }
 
 TileRenderer* NewIsometricRenderView::createTileRenderer(mc::BlockStateRegistry& block_registry,
@@ -61,17 +61,6 @@ void NewIsometricRenderView::configureBlockImages(BlockImages* block_images,
 	} else {
 		images->setBlockSideDarkening(0.75, 0.6);
 	}
-
-	/*
-	IsometricBlockImages* images = dynamic_cast<IsometricBlockImages*>(block_images);
-	assert(images != nullptr);
-
-	RenderModeType render_mode = map_config.getRenderMode();
-	if (render_mode == RenderModeType::DAYLIGHT || render_mode == RenderModeType::NIGHTLIGHT)
-		images->setBlockSideDarkening(0.95, 0.8);
-	else
-		images->setBlockSideDarkening(0.75, 0.6);
-	*/
 }
 
 void NewIsometricRenderView::configureTileRenderer(TileRenderer* tile_renderer,

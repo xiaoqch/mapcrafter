@@ -27,7 +27,7 @@ namespace renderer {
 
 class SideTileSet : public TileSet {
 public:
-	SideTileSet(int tile_width);
+	SideTileSet(int tile_width, const RenderRotation& rotation);
 	virtual ~SideTileSet();
 
 	virtual void mapChunkToTiles(const mc::ChunkPos& chunk, std::set<TilePos>& tiles);

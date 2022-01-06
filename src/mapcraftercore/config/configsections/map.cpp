@@ -104,15 +104,15 @@ bool TileSetGroupID::operator<(const TileSetGroupID& other) const {
 }
 
 TileSetID::TileSetID()
-	: TileSetGroupID(), rotation(0) {
+	: TileSetGroupID(), rotation(renderer::RenderRotation::TOP_LEFT) {
 }
 
 TileSetID::TileSetID(const std::string& world_name,
-		renderer::RenderViewType render_view, int tile_width, int rotation)
+		renderer::RenderViewType render_view, int tile_width, renderer::RenderRotation::Direction rotation)
 	: TileSetGroupID(world_name, render_view, tile_width), rotation(rotation) {
 }
 
-TileSetID::TileSetID(const TileSetGroupID& group, int rotation)
+TileSetID::TileSetID(const TileSetGroupID& group, renderer::RenderRotation::Direction rotation)
 	: TileSetGroupID(group.world_name, group.render_view, group.tile_width), rotation(rotation) {
 }
 
@@ -192,7 +192,7 @@ renderer::OverlayType MapSection::getOverlay() const {
 	return overlay.getValue();
 }
 
-std::set<int> MapSection::getRotations() const {
+std::set<renderer::RenderRotation::Direction> MapSection::getRotations() const {
 	return rotations_set;
 }
 
@@ -246,7 +246,7 @@ TileSetGroupID MapSection::getTileSetGroup() const {
 	return TileSetGroupID(getWorld(), getRenderView(), getTileWidth());
 }
 
-TileSetID MapSection::getTileSet(int rotation) const {
+TileSetID MapSection::getTileSet(renderer::RenderRotation::Direction rotation) const {
 	return TileSetID(getWorld(), getRenderView(), getTileWidth(), rotation);
 }
 
@@ -264,7 +264,7 @@ void MapSection::preParse(const INIConfigSection& section,
 	render_mode.setDefault(renderer::RenderModeType::DAYLIGHT);
 	overlay.setDefault(renderer::OverlayType::NONE);
 	rotations.setDefault("top-left");
-	
+
 	fs::path block_dir_found = util::findBlockDir();
 	if (!block_dir_found.empty()) {
 		block_dir.setDefault(block_dir_found);
@@ -354,8 +354,8 @@ void MapSection::postParse(const INIConfigSection& section,
 	ss << str;
 	std::string elem;
 	while (ss >> elem) {
-		int r = stringToRotation(elem);
-		if (r != -1) {
+		renderer::RenderRotation::Direction r = stringToRotation(elem);
+		if (r != renderer::RenderRotation::ALL) {
 			rotations_set.insert(r);
 			tile_sets.insert(getTileSet(r));
 		} else {

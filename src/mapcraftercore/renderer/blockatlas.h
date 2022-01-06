@@ -20,14 +20,7 @@
 #ifndef BLOCKATLAS_H_
 #define BLOCKATLAS_H_
 
-// #include "blocktextures.h"
-// #include "image.h"
-// #include "../mc/pos.h"
-
 #include <boost/filesystem.hpp>
-// #include <array>
-// #include <string>
-// #include <unordered_map>
 #include <cstdint>
 #include <memory>
 #include <unordered_set>

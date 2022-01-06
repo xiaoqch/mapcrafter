@@ -80,7 +80,7 @@ public:
 	/**
 	 * Returns the render behavior of a specific map and rotation of it.
 	 */
-	RenderBehavior getRenderBehavior(const std::string& map, int rotation) const;
+	RenderBehavior getRenderBehavior(const std::string& map, const RenderRotation& rotation) const;
 
 	/**
 	 * Sets the render behavior of a whole map.
@@ -90,7 +90,7 @@ public:
 	/**
 	 * Sets the render behavior of a single rotation of a map.
 	 */
-	void setRenderBehavior(const std::string& map, int rotation, RenderBehavior behavior);
+	void setRenderBehavior(const std::string& map, const RenderRotation& rotation, RenderBehavior behavior);
 
 	/**
 	 * Checks whether a map is completely to be skipped.
@@ -125,7 +125,7 @@ public:
 
 	/**
 	 * Some basic initialization things. blah.
-	 * 
+	 *
 	 * Returns false if a fatal error occured (for example unable to create the output
 	 * directory) and scanning the worlds and rendering them won't work.
 	 */
@@ -133,7 +133,7 @@ public:
 
 	/**
 	 * Scans the worlds and create the tile sets.
-	 * 
+	 *
 	 * Returns false if a fatal error occured (for example unable to read a world)
 	 * and rendering the maps won't work.
 	 */
@@ -144,13 +144,13 @@ public:
 	 * the progress handler. It renders the map only if it is specified as auto-render or
 	 * force-render in the render behaviors.
 	 */
-	void renderMap(const std::string& map, int rotation, int threads,
+	void renderMap(const std::string& map, const RenderRotation& rotation, int threads,
 			util::IProgressHandler* progress);
 
 	/**
 	 * Does the whole rendering work by calling initialize, scanWorlds and renderMap
 	 * for every map/rotation and outputs some additional progress information.
-	 * 
+	 *
 	 * You should either call this method or initialize, scanWorlds and renderMap on your
 	 * own.
 	 */
@@ -159,7 +159,7 @@ public:
 	/**
 	 * Returns which maps with which rotations need to get rendered.
 	 */
-	const std::vector<std::pair<std::string, std::set<int> > >& getRequiredMaps() const;
+	const std::vector<std::pair<std::string, std::set<RenderRotation::Direction> > >& getRequiredMaps() const;
 
 private:
 	/**
@@ -215,7 +215,7 @@ private:
 
 	// all required (= not skipped) maps and rotations
 	// as pair (map name, required rotations)
-	std::vector<std::pair<std::string, std::set<int> > > required_maps;
+	std::vector<std::pair<std::string, std::set<RenderRotation::Direction> > > required_maps;
 };
 
 }

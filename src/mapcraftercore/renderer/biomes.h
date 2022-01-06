@@ -38,31 +38,39 @@ enum class ColorMapType;
 struct ColorMap;
 
 static const uint32_t one = rgba(0xff, 0xff, 0xff, 0xff);
-static const uint32_t default_water = rgba(0x30, 0x59, 0xad, 0xff);
-static const uint32_t unknown_tint = rgba(0xff, 0x00, 0xff, 0xff);
+static const uint32_t default_grass = rgba(0x30, 0x59, 0xad, 0xff);
+static const uint32_t default_foliage = rgba(0x30, 0x59, 0xad, 0xff);
+static const uint32_t default_water = rgba(0x3F, 0x76, 0xE4, 0xFF);
 
 /**
  * A Minecraft Biome with data to tint the biome-depend blocks.
  */
 class Biome {
 private:
-	// id of the biome
-	uint16_t id;
+	std::string name;
 
 	// temperature and rainfall
 	// used to calculate the position of the tinting color in the color image
 	double temperature;
 	double rainfall;
 
-	uint32_t green_tint, water_tint;
+	uint32_t grass_tint, foliage_tint, water_tint;
+	bool swamp_mod, forest_mod;
 
 	static const mc::JavaSimplexGenerator SWAMP_GRASS_NOISE;
-public:
-	Biome(uint16_t id = 0, double temperature = 0, double rainfall = 0,
-			uint32_t green_tint = one, uint32_t water_tint = default_water);
+	static void initializeBiomes();
 
-	uint16_t getID() const;
+public:
+	Biome(std::string name = "mapcrafter:unknown", double temperature = 0.5, double rainfall = 0.5,
+			uint32_t grass_tint = default_grass, uint32_t foliage_tint = default_foliage, uint32_t water_tint = default_water,
+			bool swamp_mod = false, bool forest_mod = false);
+
+	std::string getName() const;
 	uint32_t getColor(const mc::BlockPos& pos, const ColorMapType& color_type, const ColorMap& color_map) const;
+
+	static uint16_t getBiomeId(std::string name);
+	static const Biome& getBiome(uint16_t id);
+	static const Biome& getBiome(std::string name);
 };
 
 // different Minecraft Biomes
@@ -70,105 +78,76 @@ public:
 // temperature/rainfall data from Minecraft source code (via MCP)
 // DO NOT directly access this array, use the getBiome function
 static const Biome BIOMES[] = {
-	{0, 0.5, 0.5},     // Ocean
-	{1, 0.8, 0.4, one, default_water},     // Plains
-	{2, 2.0, 0.0},     // Desert
-	{3, 0.2, 0.3},     // Extreme Hills
-	{4, 0.7, 0.8, one, default_water},     // Forest
-	{5, 0.25, 0.8, one, default_water},    // Taiga
-	{6, 0.8, 0.9, rgba(0x6a, 0x70, 0x39, 0xff), rgba(0x6A, 0x70, 0x39, 0xff)}, // Swampland (brownish)
-	{7, 0.5, 0.5, one, default_water},     // River
-	{8, 2.0, 0.0},     // Nether Wastes
-	{9, 0.5, 0.5},     // The End
+	{},	// unknown biome, all default values
 
-	{10, 0.0, 0.5, one, rgba(0x2b, 0x2a, 0x98, 0xff)},    // Frozen Ocean
-	{11, 0.0, 0.5, one, rgba(0x2b, 0x2a, 0x98, 0xff)},    // Frozen River
-	{12, 0.0, 0.5},    // Snowy Tundra
-	{13, 0.0, 0.5},    // Snowy Mountains
-	{14, 0.9, 1.0},    // Mushroom Island
-	{15, 0.9, 1.0},    // Mushroom Island Shore
-	{16, 0.8, 0.4, one, default_water},    // Beach
-	{17, 2.0, 0.0},    // Desert Hills
-	{18, 0.7, 0.8, one, default_water},    // Wooden Hills
-	{19, 0.25, 0.8, one, default_water},   // Taiga Hills
+	{"minecraft:the_void", 0.5, 0.5},
 
-	{20, 0.2, 0.3},    // Mountain Edge
-	{21, 0.95, 0.9},   // Jungle
-	{22, 0.95, 0.9},   // Jungle Hills
-	{23, 0.95, 0.8},   // Jungle Edge
-	{24, 0.5, 0.5},    // Deep Ocean
-	{25, 0.2, 0.3, one, default_water},    // Stone Beach
-	{26, 0.05, 0.3},   // Snowy Beach
-	{27, 0.6, 0.6, one, default_water},    // Birch Forest
-	{28, 0.6, 0.6, one, default_water},    // Birch Forest Hills
-	{29, 0.7, 0.8, one, default_water},    // Dark Forest
+	{"minecraft:plains", 0.0, 0.5},
+	{"minecraft:sunflower_plains", 0.0, 0.5},
+	{"minecraft:snowy_plains", 0.8, 0.4},
+	{"minecraft:ice_spikes", 0.8, 0.4},
+	{"minecraft:desert", 2.0, 0.0},
+	{"minecraft:swamp", 0.8, 0.9, rgba(0x6a, 0x70, 0x39, 0xff), rgba(0x6a, 0x70, 0x39, 0xff), rgba(0x61, 0x7B, 0x64, 0xff), true},
+	{"minecraft:forest", 0.6, 0.6},
+	{"minecraft:flower_forest", 0.6, 0.6},
+	{"minecraft:birch_forest", 0.7, 0.8},
+	{"minecraft:dark_forest", 0.7, 0.8, default_grass, default_foliage, default_water, false, true},
+	{"minecraft:old_growth_birch_forest", 0.7, 0.8},
+	{"minecraft:old_growth_pine_taiga", 0.3, 0.8},
+	{"minecraft:old_growth_spruce_taiga", 0.25, 0.8},
+	{"minecraft:taiga", 0.25, 0.8},
+	{"minecraft:snowy_taiga", -0.5, 0.4, default_grass, default_foliage, rgba(0x3D, 0x57, 0xD6, 0xff)},
+	{"minecraft:savanna", 2.0, 0.0},
+	{"minecraft:savanna_plateau", 2.0, 0.0},
+	{"minecraft:windswept_hills", 0.2, 0.3},
+	{"minecraft:windswept_gravelly_hills", 0.2, 0.3},
+	{"minecraft:windswept_forest", 0.2, 0.3},
+	{"minecraft:windswept_savanna", 2.0, 0.0},
+	{"minecraft:jungle", 0.95, 0.9},
+	{"minecraft:sparse_jungle", 0.95, 0.8},
+	{"minecraft:bamboo_jungle", 0.95, 0.9},
+	{"minecraft:badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff), default_water},
+	{"minecraft:eroded_badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff), default_water},
+	{"minecraft:wooded_badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff), default_water},
+	{"minecraft:meadow", 0.5, 0.8, default_grass, default_foliage, rgba(0x0E, 0x4E, 0xCF, 0xff)},
+	{"minecraft:grove", -0.2, 0.8},
+	{"minecraft:snowy_slopes", -0.3, 0.9},
+	{"minecraft:frozen_peaks", -0.7, 0.9},
+	{"minecraft:jagged_peaks", -0.7, 0.9},
+	{"minecraft:stony_peaks", 1.0, 0.3},
+	{"minecraft:river", 0.5, 0.5},
+	{"minecraft:frozen_river", 0.0, 0.5, default_grass, default_foliage, rgba(0x39, 0x38, 0xC9, 0xff)},
+	{"minecraft:beach", 0.8, 0.4},
+	{"minecraft:snowy_beach", 0.05, 0.3, default_grass, default_foliage, rgba(0x3D, 0x57, 0xD6, 0xff)},
+	{"minecraft:stony_shore", 0.2, 0.3},
+	{"minecraft:warm_ocean", 0.5, 0.5, default_grass, default_foliage, rgba(0x43, 0xD5, 0xEE, 0xff)},
+	{"minecraft:lukewarm_ocean", 0.5, 0.5, default_grass, default_foliage, rgba(0x45, 0xAD, 0xF2, 0xff)},
+	{"minecraft:deep_lukewarm_ocean", 0.5, 0.5, default_grass, default_foliage, rgba(0x45, 0xAD, 0xF2, 0xff)},
+	{"minecraft:ocean", 0.5, 0.5},
+	{"minecraft:deep_ocean", 0.5, 0.5},
+	{"minecraft:cold_ocean", 0.5, 0.5, default_grass, default_foliage, rgba(0x3D, 0x57, 0xD6, 0xff)},
+	{"minecraft:deep_cold_ocean", 0.5, 0.5, default_grass, default_foliage, rgba(0x3D, 0x57, 0xD6, 0xff)},
+	{"minecraft:frozen_ocean", 0.0, 0.5, default_grass, default_foliage, rgba(0x39, 0x38, 0xC9, 0xff)},
+	{"minecraft:deep_frozen_ocean", 0.5, 0.5, default_grass, default_foliage, rgba(0x39, 0x38, 0xC9, 0xff)},
+	{"minecraft:mushroom_fields", 0.9, 1.0},
+	{"minecraft:dripstone_caves", 0.8, 0.4},
+	{"minecraft:lush_caves", 0.5, 0.5},
 
-	{30, -0.5, 0.4},   // Snowy Taiga
-	{31, -0.5, 0.4},   // Snowy Taiga Hills
-	{32, 0.3, 0.8, one, default_water},    // Giant Tree Taiga
-	{33, 0.3, 0.8, one, default_water},    // Giant Tree Taiga Hills
-	{34, 0.2, 0.3},    // Wooden Mountains
-	{35, 1.2, 0.0},    // Savanna
-	{36, 1.0, 0.0},    // Savanna Plateau
-	{37, 2.0, 0},      // Badlands
-	{38, 2.0, 0},      // Wooden Badlands Plateau
-	{39, 2.0, 0},      // Badlands Plateau
+	{"minecraft:nether_wastes", 2.0, 0.0},
+	{"minecraft:warped_forest", 2.0, 0.0},
+	{"minecraft:crimson_forest", 2.0, 0.0},
+	{"minecraft:soul_sand_valley", 2.0, 0.0},
+	{"minecraft:basalt_deltas", 2.0, 0.0},
 
-	{40, 0.5, 0.4}, // Small End Islands
-	{41, 0.5, 0.4}, // End Midlands
-	{42, 0.5, 0.4}, // End Highlands
-	{43, 0.5, 0.4}, // End Barrens
-	{44, 0.8, 0.4, one, rgba(0x33, 0xa1, 0xb4, 0xff)}, // Warm Ocean
-	{45, 0.8, 0.4, one, rgba(0x33, 0xa1, 0xb4, 0xff)}, // Lukewarm Ocean
-	{46, 0.8, 0.4, one, rgba(0x2e, 0x42, 0xa2, 0xff)}, // Cold Ocean
-	{47, 0.8, 0.4, one, rgba(0x33, 0xa1, 0xb4, 0xff)}, // Deep Warm Ocean
-	{48, 0.8, 0.4, one, rgba(0x33, 0xa1, 0xb4, 0xff)}, // Deep Lukewarm Ocean
-	{49, 0.8, 0.4, one, rgba(0x2e, 0x42, 0xa2, 0xff)}, // Deep Cold Ocean
-	{50, 0.8, 0.4, one, rgba(0x2b, 0x2a, 0x98, 0xff)}, // Deep Frozen Ocean
-
-	{127, 0.5, 0.5}, // The Void
-
-	{129, 0.8, 0.4, one, default_water},   // Sunflower Plains
-	{130, 2.0, 0.0},   // Desert Lakes
-	{131, 0.25, 0.3},   // Gravelly Mountains
-	{132, 0.7, 0.8, one, default_water},   // Flower Forest
-	{133, 0.05, 0.8, one, default_water},  // Taiga Mountains
-	{134, 0.8, 0.9, rgba(0x6a, 0x70, 0x39, 0xff), rgba(0x6A, 0x70, 0x39, 0xff)}, // Swamp Hills (brownish)
-
-	{140, 0.0, 0.5},   // Ice Spikes
-
-	{149, 0.95, 0.9},  // Modified Jungle
-	{151, 0.95, 0.9},  // Modified Jungle Edge
-
-	{155, 0.6, 0.6, one, default_water},   // Tall Birch Forest
-	{156, 0.6, 0.6, one, default_water},   // Tall Birch Hills
-	{157, 0.7, 0.8, one, default_water},   // Dark Forest Hills
-	{158, 0.05, 0.8},                          // Snowy Taiga Mountains
-
-	{160, 0.25, 0.8, one, default_water},  // Giant Spruce Taiga
-	{161, 0.25, 0.8, one, default_water},  // Giant Spruce Taiga Hills
-	{162, 0.2, 0.3},   // Gravelly Mountains +
-	{163, 1.2, 0.0},   // Shattered Savanna
-	{164, 1.0, 0.0},   // Shattered Savanna Plateau
-	{165, 2.0, 0.0},   // Eroded Badlands
-	{166, 2.0, 0.0},   // Modified Wooden Badlands Plateau
-	{167, 2.0, 0.0},   // Modified Badlands Plateau
-
-	{168, 0.95, 0.9},  // Bamboo Jungle
-	{169, 0.95, 0.9},  // Bamboo Jungle Hills
-
-	{170, 2.0, 0.0},   // Soul Sand Valley
-	{171, 2.0, 0.0},   // Crimson Forest
-	{172, 2.0, 0.0},   // Warped Forest
-	{173, 2.0, 0.0},   // Basalt Deltas
-
-	{210, 0.0, 0.0, unknown_tint, unknown_tint}, // "Unknown" biome
+	{"minecraft:the_end", 0.5, 0.5},
+	{"minecraft:end_highlands", 0.5, 0.5},
+	{"minecraft:end_midlands", 0.5, 0.5},
+	{"minecraft:small_end_islands", 0.5, 0.5},
+	{"minecraft:end_barrens", 0.5, 0.5},
 };
 
 static const std::size_t BIOMES_SIZE = sizeof(BIOMES) / sizeof(Biome);
-static const int DEFAULT_BIOME = 21; // Jungle
-
-Biome getBiome(uint16_t id);
+static const int DEFAULT_BIOME_ID = 0;
 
 } /* namespace render */
 } /* namespace mapcrafter */
