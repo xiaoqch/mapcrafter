@@ -51,9 +51,9 @@ bool BlockAtlas::OpenDictionnary(fs::path path, std::string name) {
 	}
 
 	bool        ok = false;
-	int         block_width;
-	int         block_height;
-	int         columns;
+	int         block_width = 32;	// Default to please the compiler
+	int         block_height = 32;
+	int         columns = 96;
 	std::string first_line;
 
 	try {

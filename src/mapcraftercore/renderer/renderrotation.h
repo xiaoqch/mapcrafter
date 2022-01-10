@@ -42,21 +42,12 @@ class RenderRotation {
 	/**
 	 * @brief Multiple type of constructor to accomodate multiple situations
 	 */
-	RenderRotation() : rotation(ALL) { updateVectors(); }
 	RenderRotation(int rotation) : rotation((Direction)rotation) { updateVectors(); }
-	RenderRotation(const RenderRotation& rot) : rotation(rot.rotation) { updateVectors(); }
-
-	void setRotation(Direction dir) {
-		rotation = dir;
-		updateVectors();
-	}
 
 	/**
 	 * @brief Convert to an integer, so to be used like index in a vector, map, array, ...
 	 * @param dir
 	 */
-	operator int() const { return (int)this->rotation; };
-	operator int() { return (int)this->rotation; };
 	explicit operator Direction() const { return this->rotation; };
 	explicit operator Direction() { return this->rotation; };
 

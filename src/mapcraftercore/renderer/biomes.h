@@ -37,10 +37,10 @@ class RGBAImage;
 enum class ColorMapType;
 struct ColorMap;
 
-static const uint32_t one = rgba(0xff, 0xff, 0xff, 0xff);
-static const uint32_t default_grass = rgba(0x30, 0x59, 0xad, 0xff);
-static const uint32_t default_foliage = rgba(0x30, 0x59, 0xad, 0xff);
-static const uint32_t default_water = rgba(0x3F, 0x76, 0xE4, 0xFF);
+// static const uint32_t one = rgba(0xff, 0xff, 0xff, 0xff);
+static const uint32_t default_grass = rgba(0x7F, 0xB2, 0x38, 0xff);	// 7FB238
+static const uint32_t default_foliage = rgba(0x00, 0x7C, 0x00, 0xff); // 007C00
+static const uint32_t default_water = rgba(0x3F, 0x76, 0xE4, 0xFF);	// 3F76E4
 
 /**
  * A Minecraft Biome with data to tint the biome-depend blocks.
@@ -54,7 +54,7 @@ private:
 	double temperature;
 	double rainfall;
 
-	uint32_t grass_tint, foliage_tint, water_tint;
+	RGBAPixel grass_tint, foliage_tint, water_tint;
 	bool swamp_mod, forest_mod;
 
 	static const mc::JavaSimplexGenerator SWAMP_GRASS_NOISE;
@@ -62,11 +62,11 @@ private:
 
 public:
 	Biome(std::string name = "mapcrafter:unknown", double temperature = 0.5, double rainfall = 0.5,
-			uint32_t grass_tint = default_grass, uint32_t foliage_tint = default_foliage, uint32_t water_tint = default_water,
+			RGBAPixel grass_tint = default_grass, RGBAPixel foliage_tint = default_foliage, RGBAPixel water_tint = default_water,
 			bool swamp_mod = false, bool forest_mod = false);
 
 	std::string getName() const;
-	uint32_t getColor(const mc::BlockPos& pos, const ColorMapType& color_type, const ColorMap& color_map) const;
+	RGBAPixel getColor(const mc::BlockPos& pos, const ColorMapType& color_type, const ColorMap& color_map) const;
 
 	static uint16_t getBiomeId(std::string name);
 	static const Biome& getBiome(uint16_t id);
@@ -106,9 +106,9 @@ static const Biome BIOMES[] = {
 	{"minecraft:jungle", 0.95, 0.9},
 	{"minecraft:sparse_jungle", 0.95, 0.8},
 	{"minecraft:bamboo_jungle", 0.95, 0.9},
-	{"minecraft:badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff), default_water},
-	{"minecraft:eroded_badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff), default_water},
-	{"minecraft:wooded_badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff), default_water},
+	{"minecraft:badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff)},
+	{"minecraft:eroded_badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff)},
+	{"minecraft:wooded_badlands", 2.0, 0, rgba(0x90, 0x81, 0x4D, 0xff), rgba(0x9E, 0x81, 0x4D, 0xff)},
 	{"minecraft:meadow", 0.5, 0.8, default_grass, default_foliage, rgba(0x0E, 0x4E, 0xCF, 0xff)},
 	{"minecraft:grove", -0.2, 0.8},
 	{"minecraft:snowy_slopes", -0.3, 0.9},

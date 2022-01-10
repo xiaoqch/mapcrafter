@@ -35,7 +35,7 @@ namespace renderer {
 
 const mc::JavaSimplexGenerator Biome::SWAMP_GRASS_NOISE;
 
-Biome::Biome(std::string name, double temperature, double rainfall, uint32_t grass_tint, uint32_t foliage_tint, uint32_t water_tint, bool swamp_mod, bool forest_mod)
+Biome::Biome(std::string name, double temperature, double rainfall, RGBAPixel grass_tint, RGBAPixel foliage_tint, RGBAPixel water_tint, bool swamp_mod, bool forest_mod)
 	:name(name), temperature(temperature), rainfall(rainfall),
 	  grass_tint(grass_tint), foliage_tint(foliage_tint), water_tint(water_tint),
 	  swamp_mod(swamp_mod), forest_mod(forest_mod) {
@@ -51,17 +51,21 @@ std::string Biome::getName() const {
 /**
  * Calculates the color of the biome with a biome color image.
  */
-uint32_t Biome::getColor(const mc::BlockPos& pos, const ColorMapType& color_type,
+RGBAPixel Biome::getColor(const mc::BlockPos& pos, const ColorMapType& color_type,
 		const ColorMap& color_map) const {
 
 	if (color_type == ColorMapType::WATER) {
+		// return default_water;
 		return water_tint;
 	}
 
-	uint32_t tint = foliage_tint;
+	// RGBAPixel tint = default_foliage;
+	RGBAPixel tint = foliage_tint;
 	if (color_type == ColorMapType::GRASS) {
+		// tint = default_grass;
 		tint = grass_tint;
 	}
+	// return tint;
 
 	// bandland grass colors
 	// if (id >= 165 && id <= 167) {
@@ -83,8 +87,9 @@ uint32_t Biome::getColor(const mc::BlockPos& pos, const ColorMapType& color_type
 	// y is temperature * rainfall
 	float y = std::min(1.0, std::max(0.0, rainfall)) * x;
 
-	uint32_t color = color_map.getColor(x, y);
-	color = rgba_multiply(color, tint);
+	RGBAPixel color = color_map.getColor(x, y);
+	color = rgba_average(color, tint);
+
 	return color;
 }
 

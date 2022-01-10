@@ -133,7 +133,7 @@ private:
 
 	// the index of the chunk sections in the sections array
 	// or -1 if section does not exist
-	int section_offsets[CHUNK_HIGHEST-CHUNK_LOWEST];
+	size_t section_offsets[CHUNK_HIGHEST-CHUNK_LOWEST];
 	// the array with the sections, see indexes above
 	std::vector<ChunkSection> sections;
 

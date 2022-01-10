@@ -155,6 +155,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 
 		uint16_t id = current_chunk->getBlockID(local, false);
 		if (id == mc::Chunk::nop_id) continue;
+		// const mc::BlockState& bs = block_registry.getBlockState(id);
 		const BlockImage* block_image = &block_images->getBlockImage(id);
 
 		// Early rejection if nothing to draw
@@ -169,10 +170,10 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 		uint16_t id_west  = getBlock(top + render_view->getRotation().getWest()).id;
 
 		// Try an early rejection if full_water with waterloged neighbours
-		bool solid_top;
-		bool water_top;
-		bool water_south;
-		bool water_west;
+		bool solid_top = false;
+		bool water_top = false;
+		bool water_south = false;
+		bool water_west = false;
 		if (block_image->is_waterlogged) {
 			const BlockImage* block_image_top = &block_images->getBlockImage(id_top);
 			const BlockImage* block_image_south = &block_images->getBlockImage(id_south);
@@ -222,15 +223,15 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			bool strip_up = false;
 			bool strip_left = false;
 			bool strip_right = false;
-			// if (block_image->can_partial) {
-			// 	strip_up    = id == id_top;
-			// 	strip_right = id == id_south;
-			// 	strip_left  = id == id_west;
-			// } else if (!block_image->is_transparent) {
-			// 	strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
-			// 	strip_right = block_images->getBlockImage(id_south).is_transparent == false;
-			// 	strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
-			// }
+			if (block_image->can_partial) {
+				strip_up    = id == id_top;
+				strip_right = id == id_south;
+				strip_left  = id == id_west;
+			} else if (!block_image->is_transparent) {
+				strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
+				strip_right = block_images->getBlockImage(id_south).is_transparent == false;
+				strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
+			}
 
 			if (strip_up || strip_left || strip_right) {
 				for (int i=0; i<tile_image.image.width*tile_image.image.height; i++) {
@@ -284,7 +285,6 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			}
 
 			uint32_t biome_color = getBiomeColor(top, waterlog_full_image, current_chunk);
-			// biome_color = rgba( rgba_alpha(biome_color)>>2, rgba_red(biome_color), rgba_green(biome_color), rgba_blue(biome_color));
 
 			std::vector<RGBAPixel>::const_iterator pit      = waterlog->data.begin();
 			std::vector<RGBAPixel>::const_iterator pitend   = waterlog->data.end();

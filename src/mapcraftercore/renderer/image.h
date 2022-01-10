@@ -55,6 +55,13 @@ inline uint8_t rgba_alpha(RGBAPixel value) {
 	return (value & 0xff000000) >> 24;
 }
 
+inline RGBAPixel rgba_average(RGBAPixel v1, RGBAPixel v2) {
+	RGBAPixel v1_masked = v1 & 0x00FEFEFE;
+	RGBAPixel v2_masked = v2 & 0x00FEFEFE;
+	RGBAPixel sum = (v1_masked + v2_masked) >> 1;
+	return (v1 & 0xff000000) | sum;
+}
+
 // http://hugi.scene.org/online/hugi21/co32bcol.htm
 inline RGBAPixel rgba_multiply(RGBAPixel v1, RGBAPixel v2) {
 	uint32_t r = (((v1 & 0xff) * (v2 & 0xff) + 0x80) >> 8) & 0xff;

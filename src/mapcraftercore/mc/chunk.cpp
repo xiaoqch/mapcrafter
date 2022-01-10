@@ -216,7 +216,7 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 			readPackedShorts_v116(databiomes.payload, section.biomes, &section.biomes[boost::size(section.biomes)]);
 
 			std::vector<uint16_t> palette_biomes(paletteb.payload.size());
-			int i = 0;
+			size_t i = 0;
 			for (auto pbit = paletteb.payload.begin(); pbit != paletteb.payload.end(); ++pbit, ++i) {
 				nbt::TagString& biome = (*pbit)->cast<nbt::TagString>();
 				palette_biomes[i] = mapcrafter::renderer::Biome::getBiomeId(biome.payload);
@@ -261,7 +261,7 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 
 void Chunk::clear() {
 	sections.clear();
-	for (int i = 0; i < boost::size(section_offsets); i++)
+	for (size_t i = 0; i < boost::size(section_offsets); i++)
 		section_offsets[i] = -1;
 }
 
@@ -271,16 +271,16 @@ bool Chunk::hasSection(int y) const {
 }
 
 const ChunkSection* Chunk::getSection(int y) const {
-	int idx = y >> 4;
-	if( idx < CHUNK_LOWEST || idx >= CHUNK_HIGHEST) {
+	int chunk_idx = y >> 4;
+	if( chunk_idx < CHUNK_LOWEST || chunk_idx >= CHUNK_HIGHEST) {
 		return NULL;
 	}
 	// Convert index to index into the data array
-	idx = section_offsets[idx - CHUNK_LOWEST];
-	if( idx < 0 || idx >= sections.size()) {
+	size_t section_idx = section_offsets[chunk_idx - CHUNK_LOWEST];
+	if( section_idx < 0 || section_idx >= sections.size()) {
 		return NULL;
 	}
-	return &sections[idx];
+	return &sections[section_idx];
 }
 
 uint16_t Chunk::getBlockID(const LocalBlockPos& pos, bool force) const {
@@ -372,7 +372,7 @@ uint16_t Chunk::getBiomeAt(const LocalBlockPos& pos) const {
 
 	int x = pos.x >> 2;
 	int z = pos.z >> 2;
-	int y = pos.y >> 2;
+	int y = (pos.y & 15) >> 2;
 
 	return cs->biomes[(y << 4) + (z << 2) + x];
 }

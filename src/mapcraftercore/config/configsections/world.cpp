@@ -178,7 +178,7 @@ bool WorldSection::parseField(const std::string key, const std::string value,
 		const renderer::RenderRotation& rotation = stringToRotation(value, ROTATION_NAMES);
 		if (rotation.getRotation() == renderer::RenderRotation::ALL)
 			validation.error("Invalid rotation '" + value + "'!");
-		default_rotation.setValue(rotation);
+		default_rotation.setValue(rotation.getRotation());
 	} else if (key == "sea_level") {
 		sea_level.load(key,value, validation);
 	}
