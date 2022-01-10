@@ -80,7 +80,7 @@ public:
 	/**
 	 * Returns the render behavior of a specific map and rotation of it.
 	 */
-	RenderBehavior getRenderBehavior(const std::string& map, const RenderRotation& rotation) const;
+	RenderBehavior getRenderBehavior(const std::string& map, RenderRotation::Direction rotation) const;
 
 	/**
 	 * Sets the render behavior of a whole map.
@@ -90,7 +90,7 @@ public:
 	/**
 	 * Sets the render behavior of a single rotation of a map.
 	 */
-	void setRenderBehavior(const std::string& map, const RenderRotation& rotation, RenderBehavior behavior);
+	void setRenderBehavior(const std::string& map, RenderRotation::Direction rotation, RenderBehavior behavior);
 
 	/**
 	 * Checks whether a map is completely to be skipped.
@@ -144,7 +144,7 @@ public:
 	 * the progress handler. It renders the map only if it is specified as auto-render or
 	 * force-render in the render behaviors.
 	 */
-	void renderMap(const std::string& map, const RenderRotation& rotation, int threads,
+	void renderMap(const std::string& map, RenderRotation::Direction rotation, int threads,
 			util::IProgressHandler* progress);
 
 	/**

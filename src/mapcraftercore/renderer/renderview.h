@@ -53,7 +53,7 @@ class TileRenderer;
 
 class RenderView {
 public:
-	RenderView(const RenderRotation& rotation);
+	RenderView(RenderRotation::Direction rotation);
 	virtual ~RenderView();
 
 	/**
@@ -107,7 +107,7 @@ public:
 
 private:
 	// The rotation
-	const RenderRotation& rotation;
+	const RenderRotation rotation;
 };
 
 enum class RenderViewType {
@@ -123,7 +123,7 @@ std::ostream& operator<<(std::ostream& out, RenderViewType render_view);
 /**
  * Creates a render view of the specified type. Won't return a nullptr.
  */
-RenderView* createRenderView(RenderViewType render_view, const RenderRotation& rotation);
+RenderView* createRenderView(RenderViewType render_view, RenderRotation::Direction rotation);
 
 } /* namespace renderer */
 } /* namespace mapcrafter */

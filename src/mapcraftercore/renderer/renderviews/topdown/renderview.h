@@ -27,7 +27,7 @@ namespace renderer {
 
 class TopdownRenderView : public RenderView {
 public:
-	TopdownRenderView(const RenderRotation& rotation): RenderView(rotation) {};
+	TopdownRenderView(RenderRotation::Direction rotation): RenderView(rotation) {};
 	virtual BlockImages* createBlockImages(mc::BlockStateRegistry& block_registry) const;
 	virtual TileSet* createTileSet(int tile_width) const;
 	virtual TileRenderer* createTileRenderer(mc::BlockStateRegistry& block_registry,

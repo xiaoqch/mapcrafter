@@ -30,6 +30,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <boost/filesystem.hpp>
+#include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace fs = boost::filesystem;
 
@@ -79,9 +81,9 @@ struct hash_function_region {
  */
 class World {
 public:
-	typedef std::unordered_set<ChunkPos, hash_function_chunk> ChunkSet;
-	typedef std::unordered_set<RegionPos, hash_function_region> RegionSet;
-	typedef std::unordered_map<RegionPos, std::string, hash_function_region> RegionMap;
+	typedef boost::unordered_set<ChunkPos, hash_function_chunk> ChunkSet;
+	typedef boost::unordered_set<RegionPos, hash_function_region> RegionSet;
+	typedef boost::unordered_map<RegionPos, std::string, hash_function_region> RegionMap;
 
 	/**
 	 * Constructor. You should specify a world directory and you can specify a dimension

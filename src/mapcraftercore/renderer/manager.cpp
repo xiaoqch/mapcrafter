@@ -48,7 +48,7 @@ RenderBehaviors::~RenderBehaviors() {
 }
 
 RenderBehavior RenderBehaviors::getRenderBehavior(const std::string& map,
-		const RenderRotation& rotation) const {
+		RenderRotation::Direction rotation) const {
 	if (!render_behaviors.count(map))
 		return default_behavior;
 	return render_behaviors.at(map).at(rotation);
@@ -60,7 +60,7 @@ void RenderBehaviors::setRenderBehavior(const std::string& map,
 		render_behaviors[map][rotation] = behavior;
 }
 
-void RenderBehaviors::setRenderBehavior(const std::string& map, const RenderRotation& rotation,
+void RenderBehaviors::setRenderBehavior(const std::string& map, RenderRotation::Direction rotation,
 		RenderBehavior behavior) {
 	// set whole map to default behavior if setting the first rotation
 	if (!render_behaviors.count(map))
@@ -95,11 +95,11 @@ void parseRenderBehaviorMaps(const std::vector<std::string>& maps,
 		}
 
 		// TODO maybe also move that conversion out to a file with global constants
-		RenderRotation r = RenderRotation();
-		if (rotation == "tl") r.setRotation(RenderRotation::TOP_LEFT);
-		if (rotation == "tr") r.setRotation(RenderRotation::TOP_RIGHT);
-		if (rotation == "br") r.setRotation(RenderRotation::BOTTOM_RIGHT);
-		if (rotation == "bl") r.setRotation(RenderRotation::BOTTOM_LEFT);
+		RenderRotation::Direction r = RenderRotation::Direction::ALL;
+		if (rotation == "tl") r = RenderRotation::TOP_LEFT;
+		if (rotation == "tr") r = RenderRotation::TOP_RIGHT;
+		if (rotation == "br") r = RenderRotation::BOTTOM_RIGHT;
+		if (rotation == "bl") r = RenderRotation::BOTTOM_LEFT;
 
 		if (!config.hasMap(map)) {
 			LOG(WARNING) << "Unknown map '" << map << "'.";
@@ -267,7 +267,7 @@ bool RenderManager::scanWorlds() {
 	return true;
 }
 
-void RenderManager::renderMap(const std::string& map, const RenderRotation& rotation, int threads,
+void RenderManager::renderMap(const std::string& map, RenderRotation::Direction rotation, int threads,
 		util::IProgressHandler* progress) {
 	// make sure this map/rotation actually exists and should be rendered
 	if (!config.hasMap(map) || !config.getMap(map).getRotations().count((RenderRotation::Direction)rotation)
