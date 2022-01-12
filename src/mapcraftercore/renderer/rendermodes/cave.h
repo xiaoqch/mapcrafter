@@ -21,6 +21,7 @@
 #define RENDERMODES_CAVE_H_
 
 #include "../rendermode.h"
+#include "../renderrotation.h"
 #include "../../mc/pos.h"
 
 #include <vector>
@@ -30,10 +31,8 @@ namespace renderer {
 
 class CaveRenderMode : public BaseRenderMode {
 public:
-	CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs);
+	CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs, const RenderRotation& rotation);
 	virtual ~CaveRenderMode();
-
-	virtual bool isHidden(const mc::BlockPos& pos, uint16_t id, uint16_t data);
 
 	virtual bool isHidden(const mc::BlockPos& pos, const BlockImage& block_image);
 
@@ -45,6 +44,7 @@ protected:
 	// (because you are looking from the south-west-top at the map and don't want your
 	// view into the cave covered by the southern, western, and top walls)
 	std::vector<mc::BlockPos> hidden_dirs;
+	const RenderRotation& rotation;
 };
 
 } /* namespace render */

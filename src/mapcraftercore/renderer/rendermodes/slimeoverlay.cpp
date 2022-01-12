@@ -28,9 +28,8 @@ namespace nbt = mapcrafter::mc::nbt;
 namespace mapcrafter {
 namespace renderer {
 
-SlimeOverlay::SlimeOverlay(fs::path world_dir, int rotation)
-	: OverlayRenderMode(OverlayMode::PER_BLOCK), world_dir(world_dir),
-	  rotation(rotation), world_seed(0) {
+SlimeOverlay::SlimeOverlay(fs::path world_dir)
+	: OverlayRenderMode(OverlayMode::PER_BLOCK), world_dir(world_dir), world_seed(0) {
 	try {
 		nbt::NBTFile level_dat;
 		level_dat.readNBT((world_dir / "level.dat").string().c_str());

@@ -57,11 +57,6 @@ void BaseRenderMode::initialize(const RenderView* render_view,
 	this->current_chunk = current_chunk;
 }
 
-bool BaseRenderMode::isHidden(const mc::BlockPos& pos, uint16_t id,
-		uint16_t data) {
-	return false;
-}
-
 void BaseRenderMode::draw(RGBAImage& image, const mc::BlockPos& pos,
 		uint16_t id, uint16_t data) {
 }
@@ -87,14 +82,6 @@ void MultiplexingRenderMode::initialize(const RenderView* render_view,
 		BlockImages* images, mc::WorldCache* world, mc::Chunk** current_chunk) {
 	for (auto it = render_modes.begin(); it != render_modes.end(); ++it)
 		(*it)->initialize(render_view, images, world, current_chunk);
-}
-
-bool MultiplexingRenderMode::isHidden(const mc::BlockPos& pos, uint16_t id,
-		uint16_t data) {
-	for (auto it = render_modes.begin(); it != render_modes.end(); ++it)
-		if ((*it)->isHidden(pos, id, data))
-			return true;
-	return false;
 }
 
 bool MultiplexingRenderMode::isHidden(const mc::BlockPos& pos, const BlockImage& block_image) {
@@ -138,7 +125,7 @@ std::ostream& operator<<(std::ostream& out, OverlayType overlay) {
 }
 
 RenderMode* createRenderMode(const config::WorldSection& world_config,
-		const config::MapSection& map_config, int rotation) {
+		const config::MapSection& map_config, const RenderRotation& rotation) {
 	RenderModeType type = map_config.getRenderMode();
 	OverlayType overlay = map_config.getOverlay();
 	MultiplexingRenderMode* render_mode = new MultiplexingRenderMode();
@@ -149,14 +136,15 @@ RenderMode* createRenderMode(const config::WorldSection& world_config,
 	} else if (type == RenderModeType::CAVE || type == RenderModeType::CAVELIGHT) {
 		// hide some walls of caves which would cover the view into the caves
 		if (map_config.getRenderView() == RenderViewType::ISOMETRIC)
-			render_mode->addRenderMode(new CaveRenderMode({mc::DIR_SOUTH, mc::DIR_WEST, mc::DIR_TOP}));
-		else
-			render_mode->addRenderMode(new CaveRenderMode({mc::DIR_TOP}));
+			render_mode->addRenderMode(new CaveRenderMode({rotation.getSouth(), rotation.getWest(), rotation.getTop()}, rotation));
+		else {
+			render_mode->addRenderMode(new CaveRenderMode({rotation.getTop()}, rotation));
+			render_mode->addRenderMode(new HeightOverlay());
+		}
 		// if we want some shadows, then simulate the sun light because it's dark in caves
 		if (type == RenderModeType::CAVELIGHT)
 			render_mode->addRenderMode(new LightingRenderMode(true, map_config.getLightingIntensity(),
 						map_config.getLightingWaterIntensity(), true));
-		render_mode->addRenderMode(new HeightOverlay());
 	}
 	else if (type == RenderModeType::DAYLIGHT) {
 		render_mode->addRenderMode(new LightingRenderMode(true,
@@ -178,7 +166,7 @@ RenderMode* createRenderMode(const config::WorldSection& world_config,
 		// nothing
 	} else if (overlay == OverlayType::SLIME) {
 		mc::World world(world_config.getInputDir().string(), world_config.getDimension());
-		render_mode->addRenderMode(new SlimeOverlay(world.getWorldDir(), rotation));
+		render_mode->addRenderMode(new SlimeOverlay(world.getWorldDir()));
 	} else if (overlay == OverlayType::SPAWNDAY) {
 		render_mode->addRenderMode(new SpawnOverlay(true));
 	} else if (overlay == OverlayType::SPAWNNIGHT) {

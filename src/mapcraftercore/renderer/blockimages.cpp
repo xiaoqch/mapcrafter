@@ -566,7 +566,7 @@ bool RenderedBlockImages::loadBlockImages(fs::path path, std::string view, int r
 		assert(colors.size() == uvs.size() && "Block info file corrupted");
 		std::size_t variantCnt = colors.size();
 		std::vector<uint> image_index(variantCnt), image_uv_index(variantCnt);
-		for (int cnt=0; cnt<variantCnt; cnt++) {
+		for (std::size_t cnt=0; cnt<variantCnt; cnt++) {
 			image_index[cnt] = util::as<int>(colors[cnt]);
 			image_uv_index[cnt] = util::as<int>(uvs[cnt]);
 		}

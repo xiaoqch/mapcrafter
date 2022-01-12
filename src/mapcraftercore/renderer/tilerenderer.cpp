@@ -227,10 +227,10 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 				strip_up    = id == id_top;
 				strip_right = id == id_south;
 				strip_left  = id == id_west;
-			} else if (!block_image->is_transparent) {
-				strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
-				strip_right = block_images->getBlockImage(id_south).is_transparent == false;
-				strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
+			// } else if (!block_image->is_transparent) {
+			// 	strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
+			// 	strip_right = block_images->getBlockImage(id_south).is_transparent == false;
+			// 	strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
 			}
 
 			if (strip_up || strip_left || strip_right) {

@@ -46,10 +46,10 @@ namespace renderer {
 struct CornerNeighbors {
 	mc::BlockPos pos1, pos2, pos3, pos4;
 	mc::BlockPos dir1, dir2;
-	
+
 	CornerNeighbors();
 	CornerNeighbors(const mc::BlockPos& pos1, const mc::BlockPos& dir1, const mc::BlockPos& dir2);
-	
+
 	CornerNeighbors addPos(const mc::BlockPos& pos) const;
 };
 
@@ -61,7 +61,7 @@ struct CornerNeighbors {
  */
 struct FaceCorners {
 	CornerNeighbors corner1, corner2, corner3, corner4;
-	
+
 	FaceCorners();
 	FaceCorners(const CornerNeighbors& corner1);
 };
@@ -96,7 +96,6 @@ public:
 			double lighting_water_intensity, bool simulate_sun_light);
 	virtual ~LightingRenderMode();
 
-	virtual bool isHidden(const mc::BlockPos& pos, uint16_t id, uint16_t data);
 	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id);
 
 private:

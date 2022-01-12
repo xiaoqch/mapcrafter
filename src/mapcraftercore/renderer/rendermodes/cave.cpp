@@ -26,21 +26,17 @@
 namespace mapcrafter {
 namespace renderer {
 
-CaveRenderMode::CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs)
-	: hidden_dirs(hidden_dirs) {
+CaveRenderMode::CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs, const RenderRotation& rotation )
+	: hidden_dirs(hidden_dirs), rotation(rotation) {
 }
 
 CaveRenderMode::~CaveRenderMode() {
 }
 
-bool CaveRenderMode::isHidden(const mc::BlockPos& pos, uint16_t id, uint16_t data) {
-	return false;
-}
-
 bool CaveRenderMode::isHidden(const mc::BlockPos& pos, const BlockImage& block_image) {
 	mc::BlockPos directions[6] = {
-		mc::DIR_NORTH, mc::DIR_SOUTH, mc::DIR_EAST, mc::DIR_WEST,
-		mc::DIR_TOP, mc::DIR_BOTTOM
+		rotation.getNorth(), rotation.getSouth(), rotation.getEast(), rotation.getWest(),
+		rotation.getTop(), rotation.getBottom()
 	};
 	// check if this block touches sky light
 	for (int i = 0; i < 6; i++) {
@@ -55,13 +51,13 @@ bool CaveRenderMode::isHidden(const mc::BlockPos& pos, const BlockImage& block_i
 	// we need to check if there is sunlight on the surface of the water
 	// if yes => no cave, hide block
 	// if no  => lake in a cave, show it
-	mc::Block top = getBlock(pos + mc::DIR_TOP,
+	mc::Block top = getBlock(pos + rotation.getTop(),
 			mc::GET_ID | mc::GET_SKY_LIGHT);
 	const BlockImage* top_image = &block_images->getBlockImage(top.id);
 	if ( /*block_image.is_full_water ||*/ block_image.is_waterlogged // || block_image.is_ice
 			|| /*top_image->is_full_water ||*/ top_image->is_waterlogged //|| top_image->is_ice
 			) {
-		mc::BlockPos p = pos + mc::DIR_TOP;
+		mc::BlockPos p = pos + rotation.getTop();
 
 		while (/*top_image->is_full_water ||*/ top_image->is_waterlogged /*|| top_image->is_ice*/) {
 			top = getBlock(p, mc::GET_ID | mc::GET_SKY_LIGHT);

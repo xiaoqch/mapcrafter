@@ -71,8 +71,6 @@ public:
 	/**
 	 * This method is called by the tile renderer to check if a block should be hidden.
 	 */
-	virtual bool isHidden(const mc::BlockPos& pos, uint16_t id, uint16_t data) = 0;
-
 	virtual bool isHidden(const mc::BlockPos& pos, const BlockImage& block_image) { return false; }
 
 	/**
@@ -102,11 +100,6 @@ public:
 	 */
 	virtual void initialize(const RenderView* render_view, BlockImages* images,
 			mc::WorldCache* world, mc::Chunk** current_chunk);
-
-	/**
-	 * Dummy implementation of interface method. Returns false as default.
-	 */
-	virtual bool isHidden(const mc::BlockPos& pos, uint16_t id, uint16_t data);
 
 	/**
 	 * Dummy implementation of interface method.
@@ -146,8 +139,6 @@ public:
 	 * Calls this method of each render mode and returns true if one render mode returns
 	 * true (= false is default).
 	 */
-	virtual bool isHidden(const mc::BlockPos& pos, uint16_t id, uint16_t data);
-
 	virtual bool isHidden(const mc::BlockPos& pos, const BlockImage& block_image);
 
 	/**
@@ -187,7 +178,7 @@ std::ostream& operator<<(std::ostream& out, OverlayType overlay);
  * Creates the render mode for a map config section.
  */
 RenderMode* createRenderMode(const config::WorldSection& world_config,
-		const config::MapSection& map_config, int rotation);
+		const config::MapSection& map_config, const RenderRotation& rotation);
 
 } /* namespace render */
 } /* namespace mapcrafter */

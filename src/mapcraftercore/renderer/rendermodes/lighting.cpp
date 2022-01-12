@@ -161,11 +161,6 @@ LightingRenderMode::LightingRenderMode(bool day, double lighting_intensity,
 LightingRenderMode::~LightingRenderMode() {
 }
 
-bool LightingRenderMode::isHidden(const mc::BlockPos& pos,
-		uint16_t id, uint16_t data) {
-	return false;
-}
-
 void LightingRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
 		const mc::BlockPos& pos, uint16_t id) {
 
