@@ -32,7 +32,7 @@ namespace mc {
 namespace {
 
 void readPackedShorts_v116(const std::vector<int64_t>& data, uint16_t* palette, uint16_t* palette_end) {
-	uint palette_size = palette_end - palette;
+	uint32_t palette_size = palette_end - palette;
 	uint32_t shorts_per_long = (palette_size + data.size() - 1) / data.size();
 	uint32_t bits_per_value = 64 / shorts_per_long;
 	std::fill(palette, &palette[palette_size], 0);

@@ -21,11 +21,11 @@
 #define HAVE_ENUM_CLASS_COMPARISON
 #define HAVE_ENUM_CLASS_FORWARD_DECLARATION
 
-/* #undef HAVE_ENDIAN_H */
+#define HAVE_ENDIAN_H
 /* #undef ENDIAN_H_FREEBSD */
 
-/* #undef HAVE_SYS_IOCTL_H */
-/* #undef HAVE_UNISTD_H */
-/* #undef HAVE_SYSLOG_H */
+#define HAVE_SYS_IOCTL_H
+#define HAVE_UNISTD_H
+#define HAVE_SYSLOG_H
 
-#define OPT_USE_BOOST_THREAD
+/* #undef OPT_USE_BOOST_THREAD */
