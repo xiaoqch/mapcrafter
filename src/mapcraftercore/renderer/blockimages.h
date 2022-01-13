@@ -132,18 +132,18 @@ struct BlockImage {
 	const RGBAImage& image(int variant=0) const {
 		return *(BlockAtlas::instance().GetImage(images_idx[abs(variant) % images_idx.size()]));
 	}
-	void image(std::vector<uint>& indexes) {
+	void image(std::vector<uint32_t>& indexes) {
 		images_idx = indexes;
 	}
 	const RGBAImage& uv_image(int variant=0) const {
 		return *(BlockAtlas::instance().GetImage(uv_images_idx[abs(variant) % uv_images_idx.size()]));
 	}
-	void uv_image(std::vector<uint>& indexes) {
+	void uv_image(std::vector<uint32_t>& indexes) {
 		uv_images_idx = indexes;
 	}
 
-	std::vector<uint> images_idx;
-	std::vector<uint> uv_images_idx;
+	std::vector<uint32_t> images_idx;
+	std::vector<uint32_t> uv_images_idx;
 };
 
 class RenderedBlockImages : public BlockImages {

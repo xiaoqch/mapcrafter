@@ -565,7 +565,7 @@ bool RenderedBlockImages::loadBlockImages(fs::path path, std::string view, int r
 		std::vector<std::string> uvs = util::split(block_info["uv"],':');
 		assert(colors.size() == uvs.size() && "Block info file corrupted");
 		std::size_t variantCnt = colors.size();
-		std::vector<uint> image_index(variantCnt), image_uv_index(variantCnt);
+		std::vector<uint32_t> image_index(variantCnt), image_uv_index(variantCnt);
 		for (std::size_t cnt=0; cnt<variantCnt; cnt++) {
 			image_index[cnt] = util::as<int>(colors[cnt]);
 			image_uv_index[cnt] = util::as<int>(uvs[cnt]);
@@ -751,8 +751,8 @@ void RenderedBlockImages::prepareBlockImages() {
 		std::string name = block_state.getName();
 		if (!util::endswith(name, "_biome_mask")) {
 			for (int16_t i = block.images_idx.size()-1; i >= 0 ; --i) {
-				uint bid = block.images_idx[i];
-				uint uv_bid = block.uv_images_idx[i];
+				uint32_t bid = block.images_idx[i];
+				uint32_t uv_bid = block.uv_images_idx[i];
 				BlockAtlas::instance().ShadeBlock(bid, uv_bid, darken_left, darken_right, 1.0);
 			}
 		}
