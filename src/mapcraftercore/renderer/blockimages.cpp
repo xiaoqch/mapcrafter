@@ -519,30 +519,16 @@ bool RenderedBlockImages::loadBlockImages(fs::path path, std::string view, int r
 		return false;
 	}
 
-	std::ifstream in(info_file.string());
-	std::string first_line;
-
-	std::getline(in, first_line);
-	std::vector<std::string> parts = util::split(util::trim(first_line), ' ');
-	bool ok = true;
-	int columns = 0;
-	try {
-		if (parts.size() == 3) {
-			block_width = util::as<int>(parts[0]);
-			block_height = util::as<int>(parts[1]);
-			columns = util::as<int>(parts[2]);
-		}
-	} catch (std::invalid_argument& e) {
-		ok = false;
-	}
-	if (!ok || parts.size() != 3) {
-		LOG(ERROR) << "Invalid first line in block info file " << info_file << "!";
-		LOG(ERROR) << "Line 1: '" << first_line << "'";
-		return false;
-	}
-
+	block_width = BlockAtlas::instance().GetBlockWidth();
+	block_height = BlockAtlas::instance().GetBlockHeight();;
 	block_images.reserve(BlockAtlas::instance().GetCount() * 2);
 
+	std::ifstream in(info_file.string());
+	// Skip the first line
+	{
+		std::string first_line;
+		std::getline(in, first_line);
+	}
 	int lineno = 2;
 	for (std::string line; std::getline(in, line); lineno++) {
 		line = util::trim(line);

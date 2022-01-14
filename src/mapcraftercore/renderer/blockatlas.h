@@ -63,11 +63,16 @@ class BlockAtlas {
 
 	void ShadeBlock(int idx, int uv_idx, float factor_left, float factor_right, float factor_up);
 
+	uint32_t GetBlockWidth() const { return block_width; };
+	uint32_t GetBlockHeight() const { return block_width; };
+
   private:
 	std::vector<std::shared_ptr<RGBAImage> > block_ptrs;
 	std::shared_ptr<RGBAImage>               unknown_block;
 	std::unordered_set<uint16_t>             shaded_blocks;
-	int                                      block_count;
+	uint32_t                                 block_count;
+	uint32_t                                 block_width;
+	uint32_t                                 block_height;
 };
 
 }  // namespace renderer

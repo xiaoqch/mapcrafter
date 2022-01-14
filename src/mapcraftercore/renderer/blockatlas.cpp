@@ -50,21 +50,21 @@ bool BlockAtlas::OpenDictionnary(fs::path path, std::string name) {
 		return false;
 	}
 
-	bool        ok = false;
-	int         block_width = 32;	// Default to please the compiler
-	int         block_height = 32;
-	int         columns = 96;
-	std::string first_line;
+	bool     ok      = false;
+	uint32_t columns = 96;
+	block_width      = 32;
+	block_height     = 32;
 
+	std::string first_line;
 	try {
 		std::vector<std::string> parts;
 		std::ifstream            in(info_file.string());
 		std::getline(in, first_line);
 		parts = util::split(util::trim(first_line), ' ');
 		if (parts.size() == 3) {
-			block_width  = util::as<int>(parts[0]);
-			block_height = util::as<int>(parts[1]);
-			columns      = util::as<int>(parts[2]);
+			block_width  = util::as<uint32_t>(parts[0]);
+			block_height = util::as<uint32_t>(parts[1]);
+			columns      = util::as<uint32_t>(parts[2]);
 			ok           = true;
 		}
 	} catch (std::invalid_argument& e) {
@@ -83,8 +83,8 @@ bool BlockAtlas::OpenDictionnary(fs::path path, std::string name) {
 	}
 
 	// Cut the whole block atlas
-	int blocks_x = blocks_atlas.getWidth() / block_width;
-	int blocks_y = blocks_atlas.getHeight() / block_height;
+	uint32_t blocks_x = blocks_atlas.getWidth() / block_width;
+	uint32_t blocks_y = blocks_atlas.getHeight() / block_height;
 	if (blocks_x > columns) {
 		LOG(ERROR) << "Block atlas doesn't match image index file";
 		return false;
@@ -92,7 +92,7 @@ bool BlockAtlas::OpenDictionnary(fs::path path, std::string name) {
 	this->block_count = blocks_x * blocks_y;
 	this->block_ptrs.reserve(this->block_count);
 	this->shaded_blocks.reserve(this->block_count);
-	int x = 0, y = 0;
+	uint32_t x = 0, y = 0;
 	while (y <= blocks_y) {
 		std::shared_ptr<RGBAImage> ptr = std::make_shared<RGBAImage>();
 		*ptr = blocks_atlas.clip(x * block_width, y * block_height, block_width, block_height);
