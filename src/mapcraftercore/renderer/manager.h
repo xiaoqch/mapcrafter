@@ -209,7 +209,7 @@ private:
 	std::set<std::string> map_initialized;
 
 	// maps for world- and tile set objects
-	std::map<std::string, std::array<mc::World, 4> > worlds;
+	std::map<std::string, std::array<std::shared_ptr<mc::World>, 4> > worlds;
 	// (world, render view, rotation) -> tile set
 	std::map<config::TileSetID, std::shared_ptr<TileSet> > tile_sets;
 

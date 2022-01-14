@@ -204,14 +204,14 @@ bool RenderManager::scanWorlds() {
 		RenderView* render_view = createRenderView(tile_set_it->render_view, tile_set_it->rotation);
 
 		// load the world
-		mc::World world(world_config.getInputDir().string(),
-				world_config.getDimension());
-		world.setWorldCrop(world_config.getWorldCrop());
-		if (!world.load()) {
+		std::shared_ptr<mc::World> world(new mc::World(world_config.getInputDir().string(),
+				world_config.getDimension(), world_config.getShortName()));
+		world->setWorldCrop(world_config.getWorldCrop());
+		if (!world->load()) {
 			LOG(FATAL) << "Unable to load world " << tile_set_it->world_name << "!";
 			return false;
 		}
-		int world_version = world.getMinecraftVersion();
+		int world_version = world->getMinecraftVersion();
 		if (world_version == -1) {
 			LOG(WARNING) << "Unable to determine Minecraft version of world '"
 				<< tile_set_it->world_name << "'. Maybe level.dat doesn't exist in world directory?";
@@ -234,10 +234,10 @@ bool RenderManager::scanWorlds() {
 		//  - the ones with completely specified x- AND z-bounds
 		if (world_config.needsWorldCentering()) {
 			TilePos tile_offset;
-			tile_set->scan(world, true, tile_offset);
+			tile_set->scan(*world, true, tile_offset);
 			web_config.setTileSetTileOffset(*tile_set_it, tile_offset);
 		} else {
-			tile_set->scan(world);
+			tile_set->scan(*world);
 		}
 
 		// key of this tile_sets_max_zoom map is a TileSetGroupID, not TileSetID as we access it

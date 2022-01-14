@@ -123,7 +123,19 @@ const std::string& SignEntity::getText() const {
 }
 
 WorldEntitiesCache::WorldEntitiesCache(const World& world)
-	: world(world), cache_file(world.getRegionDir() / "entities.nbt.gz") {
+	: world(world) {
+	fs::path world_name(world.getCacheDir());
+	switch (world.getDimension()) {
+		case Dimension::OVERWORLD:
+			cache_file = fs::path(world_name / "entities_overworld.nbt.gz");
+			break;
+		case Dimension::NETHER:
+			cache_file = fs::path(world_name / "entities_nether.nbt.gz");
+			break;
+		case Dimension::END:
+			cache_file = fs::path(world_name / "entities_end.nbt.gz");
+			break;
+	}
 }
 
 WorldEntitiesCache::~WorldEntitiesCache() {
@@ -236,11 +248,10 @@ void WorldEntitiesCache::update(util::IProgressHandler* progress) {
 			nbt.readNBT(reinterpret_cast<const char*>(&data[0]), data.size(),
 					mc::nbt::Compression::ZLIB);
 
-			nbt::TagCompound& level = nbt.findTag<nbt::TagCompound>("Level");
-			if (!level.hasTag<nbt::TagList>("TileEntities")) {
+			if (!nbt.hasTag<nbt::TagList>("block_entities")) {
 				continue;
 			}
-			nbt::TagList& entities = level.findTag<nbt::TagList>("TileEntities");
+			nbt::TagList& entities = nbt.findTag<nbt::TagList>("block_entities");
 			for (auto entity_it = entities.payload.begin();
 					entity_it != entities.payload.end(); ++entity_it) {
 				nbt::TagCompound entity = (*entity_it)->cast<nbt::TagCompound>();

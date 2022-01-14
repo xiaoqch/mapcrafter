@@ -93,7 +93,7 @@ void WorldSection::setConfigDir(const fs::path& config_dir) {
 	this->config_dir = config_dir;
 }
 
-std::string WorldSection::getShortName() {
+std::string WorldSection::getShortName() const {
 	return getSectionName();
 }
 

@@ -90,7 +90,7 @@ public:
 	 * of the world (Nether, Overworld per default, End). Mapcrafter will automagically
 	 * try to find the right region directory.
 	 */
-	World(std::string world_dir = "", Dimension dimension = Dimension::OVERWORLD);
+	World(std::string world_dir, Dimension dimension, std::string cache_dir);
 	~World();
 
 	/**
@@ -102,6 +102,11 @@ public:
 	 * Returns the region directory of the world.
 	 */
 	fs::path getRegionDir() const;
+
+	/**
+	 * Returns the cache directory of the world.
+	 */
+	fs::path getCacheDir() const;
 
 	/**
 	 * Returns the used dimension of the world.
@@ -166,7 +171,7 @@ public:
 
 private:
 	// world directory, region directory
-	fs::path world_dir, region_dir;
+	fs::path world_dir, region_dir, cache_dir;
 	// used dimension of the world
 	Dimension dimension;
 

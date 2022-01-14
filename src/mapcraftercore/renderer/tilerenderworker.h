@@ -58,7 +58,7 @@ struct RenderContext {
 	BlockImages* block_images;
 	TileSet* tile_set;
 	mc::BlockStateRegistry* block_registry;
-	mc::World world;
+	std::shared_ptr<mc::World> world;
 
 	std::shared_ptr<mc::WorldCache> world_cache;
 	std::shared_ptr<RenderMode> render_mode;

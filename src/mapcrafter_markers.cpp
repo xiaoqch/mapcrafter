@@ -67,7 +67,7 @@ Markers findMarkers(const config::MapcrafterConfig& config) {
 			++world_it) {
 		mc::WorldCrop world_crop = world_it->second.getWorldCrop();
 		mc::World world(world_it->second.getInputDir().string(),
-				world_it->second.getDimension());
+				world_it->second.getDimension(), world_it->second.getShortName());
 		world.setWorldCrop(world_crop);
 		if (!world.load()) {
 			LOG(ERROR) << "Unable to load world " << world_it->first << "!";
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
 	std::string config_file;
 	std::string output_file;
 	int verbosity = 0;
- 
+
 	po::options_description all("Allowed options");
 	all.add_options()
 		("help,h", "shows this help message")
