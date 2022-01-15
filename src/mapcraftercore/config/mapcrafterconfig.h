@@ -58,6 +58,7 @@ public:
 	void setConfigDir(const fs::path& config_dir);
 
 	fs::path getOutputDir() const;
+	fs::path getCacheDir() const;
 	fs::path getTemplateDir() const;
 	Color getBackgroundColor() const;
 
@@ -88,8 +89,10 @@ public:
 	void configureLogging() const;
 
 	fs::path getOutputDir() const;
+	fs::path getCacheDir() const;
 	fs::path getTemplateDir() const;
 	fs::path getOutputPath(const std::string& path) const;
+	fs::path getCachePath(const std::string& path) const;
 	fs::path getTemplatePath(const std::string& path) const;
 
 	Color getBackgroundColor() const;

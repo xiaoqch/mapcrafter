@@ -81,6 +81,10 @@ fs::path MapcrafterConfigRootSection::getOutputDir() const {
 	return output_dir.getValue();
 }
 
+fs::path MapcrafterConfigRootSection::getCacheDir() const {
+	return output_dir.getValue() / ".mccache";
+}
+
 fs::path MapcrafterConfigRootSection::getTemplateDir() const {
 	return template_dir.getValue();
 }
@@ -185,12 +189,20 @@ fs::path MapcrafterConfig::getOutputDir() const {
 	return root_section.getOutputDir();
 }
 
+fs::path MapcrafterConfig::getCacheDir() const {
+	return root_section.getCacheDir();
+}
+
 fs::path MapcrafterConfig::getTemplateDir() const {
 	return root_section.getTemplateDir();
 }
 
 fs::path MapcrafterConfig::getOutputPath(const std::string& path) const {
 	return getOutputDir() / path;
+}
+
+fs::path MapcrafterConfig::getCachePath(const std::string& path) const {
+	return getCacheDir() / path;
 }
 
 fs::path MapcrafterConfig::getTemplatePath(const std::string& path) const {

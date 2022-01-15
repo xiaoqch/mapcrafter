@@ -106,7 +106,7 @@ bool BlockAtlas::OpenDictionnary(fs::path path, std::string name) {
 	return true;
 }
 
-std::shared_ptr<const RGBAImage> const BlockAtlas::GetImage(int idx) {
+std::shared_ptr<const RGBAImage> const BlockAtlas::GetImage(uint32_t idx) {
 	if (idx < 0 || idx >= this->block_count) {
 		LOG(ERROR) << "Block atlas doesn't match image index file ";
 		return this->unknown_block;

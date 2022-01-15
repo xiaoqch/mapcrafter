@@ -58,8 +58,8 @@ class BlockAtlas {
 
 	bool OpenDictionnary(fs::path path, std::string block_file);
 
-	int const                              GetCount() { return this->block_count; };
-	std::shared_ptr<const RGBAImage> const GetImage(int idx);
+	uint32_t const                         GetCount() { return this->block_count; };
+	std::shared_ptr<const RGBAImage> const GetImage(uint32_t idx);
 
 	void ShadeBlock(int idx, int uv_idx, float factor_left, float factor_right, float factor_up);
 

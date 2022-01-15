@@ -67,7 +67,7 @@ Markers findMarkers(const config::MapcrafterConfig& config) {
 			++world_it) {
 		mc::WorldCrop world_crop = world_it->second.getWorldCrop();
 		mc::World world(world_it->second.getInputDir().string(),
-				world_it->second.getDimension(), config.getOutputPath(world_it->second.getShortName()).string());
+				world_it->second.getDimension(), config.getCachePath(world_it->second.getShortName()).string());
 		world.setWorldCrop(world_crop);
 		if (!world.load()) {
 			LOG(ERROR) << "Unable to load world " << world_it->first << "!";

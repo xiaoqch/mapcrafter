@@ -165,8 +165,7 @@ RenderMode* createRenderMode(const config::WorldSection& world_config,
 	if (overlay == OverlayType::NONE) {
 		// nothing
 	} else if (overlay == OverlayType::SLIME) {
-		mc::World world(world_config.getInputDir().string(), world_config.getDimension(), world_config.getShortName());
-		render_mode->addRenderMode(new SlimeOverlay(world.getWorldDir()));
+		render_mode->addRenderMode(new SlimeOverlay(world_config.getInputDir()));
 	} else if (overlay == OverlayType::SPAWNDAY) {
 		render_mode->addRenderMode(new SpawnOverlay(true));
 	} else if (overlay == OverlayType::SPAWNNIGHT) {

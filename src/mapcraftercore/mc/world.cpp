@@ -37,8 +37,8 @@ std::ostream& operator<<(std::ostream& out, Dimension dimension) {
 	return out;
 }
 
-World::World(std::string world_dir, Dimension dimension, std::string output_dir)
-	: world_dir(world_dir), output_dir(output_dir), dimension(dimension) {
+World::World(std::string world_dir, Dimension dimension, std::string cache_dir)
+	: world_dir(world_dir), cache_dir(cache_dir), dimension(dimension) {
 	std::string world_name = BOOST_FS_FILENAME(this->world_dir);
 
 	// try to find the region directory
@@ -91,11 +91,7 @@ fs::path World::getWorldDir() const {
 }
 
 fs::path World::getCacheDir() const {
-	return output_dir / ".cache";
-}
-
-fs::path World::getOutputDir() const {
-	return output_dir;
+	return cache_dir;
 }
 
 fs::path World::getRegionDir() const {

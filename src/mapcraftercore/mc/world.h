@@ -90,8 +90,14 @@ public:
 	 * of the world (Nether, Overworld per default, End). Mapcrafter will automagically
 	 * try to find the right region directory.
 	 */
-	World(std::string world_dir, Dimension dimension, std::string output_dir);
+	World(std::string world_dir, Dimension dimension, std::string cache_dir);
 	~World();
+
+	/**
+	 * Find the level folder, as it may varry, depending on the server type used,
+	 * Spigot, Bukkit, Vanilla, Fabric, and mods can put them in different folders.
+	 */
+	static fs::path findWorldDir(fs::path world_dir, Dimension dimension);
 
 	/**
 	 * Returns the directory of the world.
@@ -107,11 +113,6 @@ public:
 	 * Returns the cache directory of the world.
 	 */
 	fs::path getCacheDir() const;
-
-	/**
-	 * Returns the output directory of the world.
-	 */
-	fs::path getOutputDir() const;
 
 	/**
 	 * Returns the used dimension of the world.
@@ -176,7 +177,7 @@ public:
 
 private:
 	// world directory, region directory
-	fs::path world_dir, region_dir, output_dir;
+	fs::path world_dir, region_dir, cache_dir;
 	// used dimension of the world
 	Dimension dimension;
 
