@@ -3,6 +3,8 @@
 **v.3.1 WIP**
 
 * Support for 1.18.x
+  * Dockerfile build fixed
+  * Entity cafile not saved in worl folder anymore. World folder can now be mounted as read only.
   * Breaking change, doesn't support the old chunk format anymore (sorry, :( no time to develop a dynamic convertion of old Minecraft file format)
   * Chunks height supoprted from -64 to 319 included.
   * Support new biome palette
@@ -16,11 +18,10 @@
 * Bug fixes:
   * Side view of waterloged block wasn't rendering side water
 * Still to be worked on:
-  * Textures misplaced on some blocks (ex: cauldron, glass, ...)
-  * rotation to fix
   * lighting on edges funky
-  * biome color not right
+  * few water rendering edge cases
   * Blockcrafter:
+    * Textures misplaced on some blocks (ex: cauldron, glass, ...)
     * face sorting in blockcrafter to minimize Z-fighting
     * Missing block types:
       * Banners (doable?)
