@@ -3,5 +3,5 @@
 namespace mapcrafter {
 	const char* MINECRAFT_VERSION = "1.18.1";
 	const char* MAPCRAFTER_VERSION = "3.1";
-	const char* MAPCRAFTER_GITVERSION = "v.2.3.1-297-g46bf91f";
+	const char* MAPCRAFTER_GITVERSION = "v.2.3.1-298-gafa5720";
 };

@@ -205,7 +205,7 @@ bool RenderManager::scanWorlds() {
 
 		// load the world
 		std::shared_ptr<mc::World> world(new mc::World(world_config.getInputDir().string(),
-				world_config.getDimension(), world_config.getShortName()));
+				world_config.getDimension(), config.getOutputPath(world_config.getShortName()).string()));
 		world->setWorldCrop(world_config.getWorldCrop());
 		if (!world->load()) {
 			LOG(FATAL) << "Unable to load world " << tile_set_it->world_name << "!";

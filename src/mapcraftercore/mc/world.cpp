@@ -37,8 +37,8 @@ std::ostream& operator<<(std::ostream& out, Dimension dimension) {
 	return out;
 }
 
-World::World(std::string world_dir, Dimension dimension, std::string cache_dir)
-	: world_dir(world_dir), cache_dir(cache_dir), dimension(dimension) {
+World::World(std::string world_dir, Dimension dimension, std::string output_dir)
+	: world_dir(world_dir), output_dir(output_dir), dimension(dimension) {
 	std::string world_name = BOOST_FS_FILENAME(this->world_dir);
 
 	// try to find the region directory
@@ -91,7 +91,11 @@ fs::path World::getWorldDir() const {
 }
 
 fs::path World::getCacheDir() const {
-	return cache_dir;
+	return output_dir / ".cache";
+}
+
+fs::path World::getOutputDir() const {
+	return output_dir;
 }
 
 fs::path World::getRegionDir() const {
@@ -122,14 +126,14 @@ bool World::load() {
 		return false;
 	}
 
-	if(!fs::exists(cache_dir)) {
+	if(!fs::exists(getCacheDir())) {
 		try {
-			fs::create_directories(cache_dir);
+			fs::create_directories(getCacheDir());
 		} catch(const std::exception& e) {
 			std::cerr << e.what() << '\n';
 		}
-		if(!fs::exists(cache_dir)) {
-			std::cerr << "Error: Cache directory " << cache_dir << " can't be created!" << std::endl;
+		if(!fs::exists(getCacheDir())) {
+			std::cerr << "Error: Cache directory " << getCacheDir() << " can't be created!" << std::endl;
 			return false;
 		}
 	}

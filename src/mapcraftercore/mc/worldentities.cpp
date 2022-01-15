@@ -124,18 +124,7 @@ const std::string& SignEntity::getText() const {
 
 WorldEntitiesCache::WorldEntitiesCache(const World& world)
 	: world(world) {
-	fs::path world_name(world.getCacheDir());
-	switch (world.getDimension()) {
-		case Dimension::OVERWORLD:
-			cache_file = fs::path(world_name / "entities_overworld.nbt.gz");
-			break;
-		case Dimension::NETHER:
-			cache_file = fs::path(world_name / "entities_nether.nbt.gz");
-			break;
-		case Dimension::END:
-			cache_file = fs::path(world_name / "entities_end.nbt.gz");
-			break;
-	}
+	cache_file = fs::path(world.getCacheDir() / "entities.nbt.gz");
 }
 
 WorldEntitiesCache::~WorldEntitiesCache() {
