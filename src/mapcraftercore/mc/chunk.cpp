@@ -143,8 +143,7 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 			continue;
 
 		const nbt::TagCompound& blockstates = section_tag.findTag<nbt::TagCompound>("block_states");
-		if (!blockstates.hasTag<nbt::TagList>("palette")
-			|| !blockstates.hasTag<nbt::TagLongArray>("data"))
+		if (!blockstates.hasTag<nbt::TagList>("palette"))
 			continue;
 
 		const nbt::TagCompound& biomes = section_tag.findTag<nbt::TagCompound>("biomes");
@@ -156,7 +155,7 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 		section.y = y.payload;
 
 		/**
-		 * Get the block states info
+		 * Get the block states palette
 		 */
 
 		// Depalettize block_states palette
@@ -186,27 +185,40 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 		/**
 		 * Get the block states data
 		 */
+		if (palettebs.payload.size()>1) {
+			const nbt::TagLongArray& databs = blockstates.findTag<nbt::TagLongArray>("data");
+			readPackedShorts_v116(databs.payload, section.block_ids, &section.block_ids[boost::size(section.block_ids)]);
 
-		const nbt::TagLongArray& databs = blockstates.findTag<nbt::TagLongArray>("data");
-		readPackedShorts_v116(databs.payload, section.block_ids, &section.block_ids[boost::size(section.block_ids)]);
-
-		bool ok = true;
-		for (size_t i = 0; i < 16*16*16; i++) {
-			if (section.block_ids[i] >= palette_blockstates.size()) {
-				int bits_per_entry = databs.payload.size() * 64 / (16*16*16);
-				LOG(ERROR) << "Incorrectly parsed palette ID " << section.block_ids[i]
-					<< " at index " << i << " (max is " << palette_blockstates.size()-1
-					<< " with " << bits_per_entry << " bits per entry)";
-				ok = false;
-				break;
+			bool ok = true;
+			for (size_t i = 0; i < 16*16*16; i++) {
+				if (section.block_ids[i] >= palette_blockstates.size()) {
+					int bits_per_entry = databs.payload.size() * 64 / (16*16*16);
+					LOG(ERROR) << "Incorrectly parsed palette ID " << section.block_ids[i]
+						<< " at index " << i << " (max is " << palette_blockstates.size()-1
+						<< " with " << bits_per_entry << " bits per entry)";
+					ok = false;
+					break;
+				}
+				section.block_ids[i] = palette_blockstates_idx[section.block_ids[i]];
 			}
-			section.block_ids[i] = palette_blockstates_idx[section.block_ids[i]];
-		}
-		if (!ok) {
-			continue;
+			if (!ok) {
+				continue;
+			}
+		} else if (palettebs.payload.size()==1) {
+			// Check if air is the only block in this section, if so, ignore it completly, it will speed up the rest
+			// of the rendering as we won't have to verify every single block in this section.
+			if (palette_blockstates_idx[0] == nop_id) continue;
+			// Only 1 in palette: There's only block in this chunk
+			std::fill(section.block_ids, section.block_ids+boost::size(section.block_ids), palette_blockstates_idx[0]);
+		} else {
+			// No palette, this shouldn't happen, anyway let's use the default one
+			std::fill(section.block_ids, section.block_ids+boost::size(section.block_ids), 0);
 		}
 
-		// Get the biome data
+
+		/**
+		 * Get the biome data
+		 */
 		const nbt::TagList& paletteb = biomes.findTag<nbt::TagList>("palette");
 		if (paletteb.payload.size()>1) {
 			// More than one biome: there must be data and palette size > 1
