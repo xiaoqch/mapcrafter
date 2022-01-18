@@ -170,9 +170,9 @@ void blockImageMultiply(RGBAImage& block, const RGBAImage& uv_mask,
 
 	uint32_t fl[4], fr[4], fu[4];
 	for (int i = 0; i < 4; i++) {
-		fl[i] = std::min(255u, (uint)(factors_left[i] * 255u));
-		fr[i] = std::min(255u, (uint)(factors_right[i] * 255u));
-		fu[i] = std::min(255u, (uint)(factors_up[i] * 255u));
+		fl[i] = std::min(255u, (uint32_t)(factors_left[i] * 255u));
+		fr[i] = std::min(255u, (uint32_t)(factors_right[i] * 255u));
+		fu[i] = std::min(255u, (uint32_t)(factors_up[i] * 255u));
 	}
 
 
