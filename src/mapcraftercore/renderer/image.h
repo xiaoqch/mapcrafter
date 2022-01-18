@@ -64,16 +64,24 @@ inline RGBAPixel rgba_average(RGBAPixel v1, RGBAPixel v2) {
 
 // http://hugi.scene.org/online/hugi21/co32bcol.htm
 inline RGBAPixel rgba_multiply(RGBAPixel v1, RGBAPixel v2) {
-	uint32_t r = (((v1 & 0xff) * (v2 & 0xff) + 0x80) >> 8) & 0xff;
-	uint32_t g = (((v1 & 0xff00) * (v2 & 0xff00) + 0x8000) >> 16) & 0xff00;
-	uint32_t b = ((((uint64_t) (v1 & 0xff0000) * (v2 & 0xff0000)) + 0x800000) >> 24) & 0xff0000;
+	uint32_t r = (((v1 & 0xff) * (v2 & 0xff) + 0xfe) >> 8) & 0xff;
+	uint32_t g = (((v1 & 0xff00) * (v2 & 0xff00) + 0xfe00) >> 16) & 0xff00;
+	uint32_t b = ((((uint64_t) (v1 & 0xff0000) * (v2 & 0xff0000)) + 0xfe0000) >> 24) & 0xff0000;
 	return (v1 & 0xff000000) | r | g | b;
+}
+
+inline RGBAPixel rgba_multiply_with_alpha(RGBAPixel v1, RGBAPixel v2) {
+	uint32_t r = (((v1 & 0xff) * (v2 & 0xff) + 0xfe) >> 8) & 0xff;
+	uint32_t g = (((v1 & 0xff00) * (v2 & 0xff00) + 0xfe00) >> 16) & 0xff00;
+	uint32_t b = ((((uint64_t) (v1 & 0xff0000) * (v2 & 0xff0000)) + 0xfe0000) >> 24) & 0xff0000;
+	uint32_t a = ((((uint64_t) (v1 & 0xff000000) * (v2 & 0xff000000)) + 0xfe000000) >> 32) & 0xff000000;
+	return a | r | g | b;
 }
 
 // http://hugi.scene.org/online/hugi21/co32bcol.htm
 inline RGBAPixel rgba_multiply_scalar(RGBAPixel value, uint32_t factor) {
-	uint32_t g = (((value & 0xff00) * factor + 0x8000) >> 8) & 0xff00;
-	uint32_t br = (((value & 0xff00ff) * factor + 0x800080) >> 8) & 0xff00ff;
+	uint32_t g = (((value & 0xff00) * factor + 0xfe00) >> 8) & 0xff00;
+	uint32_t br = (((value & 0xff00ff) * factor + 0xfe00fe) >> 8) & 0xff00ff;
 	uint32_t a = value & 0xff000000;
 	return a | g | br;
 }

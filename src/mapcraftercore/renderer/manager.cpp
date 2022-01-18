@@ -201,7 +201,7 @@ bool RenderManager::scanWorlds() {
 	for (auto tile_set_it = needed_tile_sets.begin();
 			tile_set_it != needed_tile_sets.end(); ++tile_set_it) {
 		config::WorldSection world_config = config.getWorld(tile_set_it->world_name);
-		RenderView* render_view = createRenderView(tile_set_it->render_view, tile_set_it->rotation);
+		RenderView* render_view = createRenderView(tile_set_it->render_view, tile_set_it->rotation, 1.0f );
 
 		// load the world
 		std::shared_ptr<mc::World> world(new mc::World(world_config.getInputDir().string(),
@@ -285,7 +285,7 @@ void RenderManager::renderMap(const std::string& map, RenderRotation::Direction 
 
 	// TODO keep block state registry global per map. or are there any reasons to make more global?
 	mc::BlockStateRegistry block_registry;
-	std::shared_ptr<RenderView> render_view(createRenderView(map_config.getRenderView(), rotation));
+	std::shared_ptr<RenderView> render_view(createRenderView(map_config.getRenderView(), rotation, map_config.getWaterOpacity()));
 
 	// output a small notice if we render this map incrementally
 	int last_rendered = web_config.getMapLastRendered(map, rotation);

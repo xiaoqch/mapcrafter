@@ -34,8 +34,8 @@
 namespace mapcrafter {
 namespace renderer {
 
-RenderView::RenderView(RenderRotation::Direction rotation)
-	: rotation(rotation) {
+RenderView::RenderView(RenderRotation::Direction rotation, double water_opacity)
+	: rotation(rotation), water_opacity(water_opacity) {
 };
 
 RenderView::~RenderView() {
@@ -63,11 +63,11 @@ std::ostream& operator<<(std::ostream& out, RenderViewType render_view) {
 	}
 }
 
-RenderView* createRenderView(RenderViewType render_view, RenderRotation::Direction rotation) {
+RenderView* createRenderView(RenderViewType render_view, RenderRotation::Direction rotation, double water_opacity) {
 	switch (render_view) {
-	case RenderViewType::ISOMETRIC: return new NewIsometricRenderView(rotation);
-	case RenderViewType::SIDE: return new SideRenderView(rotation);
-	case RenderViewType::TOPDOWN: return new TopdownRenderView(rotation);
+	case RenderViewType::ISOMETRIC: return new NewIsometricRenderView(rotation, water_opacity);
+	case RenderViewType::SIDE: return new SideRenderView(rotation, water_opacity);
+	case RenderViewType::TOPDOWN: return new TopdownRenderView(rotation, water_opacity);
 	// thou shalt not return nullptr!
 	default: assert(false); return nullptr;
 	}

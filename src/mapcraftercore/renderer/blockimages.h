@@ -20,7 +20,6 @@
 #ifndef BLOCKIMAGES_H_
 #define BLOCKIMAGES_H_
 
-#include "blocktextures.h"
 #include "blockatlas.h"
 #include "image.h"
 #include "../mc/pos.h"

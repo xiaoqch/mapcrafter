@@ -142,7 +142,7 @@ private:
 	std::set<renderer::RenderRotation::Direction> rotations_set;
 
 	Field<fs::path> block_dir;
-	Field<int> texture_size, texture_blur, tile_width;
+	Field<int> texture_size, tile_width;
 	Field<double> water_opacity;
 
 	Field<ImageFormat> image_format;

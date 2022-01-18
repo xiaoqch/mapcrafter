@@ -53,7 +53,7 @@ class TileRenderer;
 
 class RenderView {
 public:
-	RenderView(RenderRotation::Direction rotation);
+	RenderView(RenderRotation::Direction rotation, double water_opacity);
 	virtual ~RenderView();
 
 	/**
@@ -104,10 +104,12 @@ public:
 			const config::MapSection& map_config) const;
 
 	const RenderRotation& getRotation() const { return rotation; }
+	double getWaterOpacity() const { return water_opacity; }
 
 private:
 	// The rotation
 	const RenderRotation rotation;
+	const double water_opacity;
 };
 
 enum class RenderViewType {
@@ -123,7 +125,7 @@ std::ostream& operator<<(std::ostream& out, RenderViewType render_view);
 /**
  * Creates a render view of the specified type. Won't return a nullptr.
  */
-RenderView* createRenderView(RenderViewType render_view, RenderRotation::Direction rotation);
+RenderView* createRenderView(RenderViewType render_view, RenderRotation::Direction rotation, double water_opacity);
 
 } /* namespace renderer */
 } /* namespace mapcrafter */

@@ -151,7 +151,7 @@ void WorldSection::preParse(const INIConfigSection& section,
 	default_view.setDefault(mc::BlockPos(0, 0, 0));
 	default_zoom.setDefault(0);
 	default_rotation.setDefault(-1);
-	sea_level.setDefault(64);
+	sea_level.setDefault(62);
 
 	crop_unpopulated_chunks.setDefault(false);
 }

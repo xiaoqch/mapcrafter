@@ -208,6 +208,10 @@ int MapSection::getTileWidth() const {
 	return tile_width.getValue();
 }
 
+double MapSection::getWaterOpacity() const {
+	return water_opacity.getValue();
+}
+
 ImageFormat MapSection::getImageFormat() const {
 	return image_format.getValue();
 }
@@ -279,6 +283,7 @@ void MapSection::preParse(const INIConfigSection& section,
 
 	lighting_intensity.setDefault(1.0);
 	lighting_water_intensity.setDefault(0.85);
+	water_opacity.setDefault(1.0);
 	render_biomes.setDefault(true);
 	use_image_mtimes.setDefault(true);
 }
@@ -313,8 +318,6 @@ bool MapSection::parseField(const std::string key, const std::string value,
 						+ block_dir.getValue().string() + "' does not exist!");
 			}
 		}
-	} else if (key == "texture_blur") {
-		texture_blur.load(key, value, validation);
 	} else if (key == "texture_size") {
 		if (texture_size.load(key, value, validation)
 				&& (texture_size.getValue() <= 0  || texture_size.getValue() > 128))
@@ -335,6 +338,10 @@ bool MapSection::parseField(const std::string key, const std::string value,
 		lighting_intensity.load(key, value, validation);
 	} else if (key == "lighting_water_intensity") {
 		lighting_water_intensity.load(key, value, validation);
+	} else if (key == "water_opacity") {
+		if (water_opacity.load(key, value, validation)
+			&& (water_opacity.getValue() < 0 || water_opacity.getValue() > 1.0))
+			validation.error("'water_opacity' must be a float between 0.0 (full transparent) and 1.0 (default texture tansparency)");
 	} else if (key == "render_biomes") {
 		render_biomes.load(key, value, validation);
 	} else if (key == "use_image_mtimes") {

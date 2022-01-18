@@ -264,10 +264,39 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 				block_images->prepareBiomeBlockImage(tile_image.image, *block_image, getBiomeColor(top, *block_image, current_chunk));
 			}
 
+			if (block_image->shadow_edges > 0) {
+				auto shadow_edge = [this, top](const mc::BlockPos& dir) {
+					const BlockImage& b = block_images->getBlockImage(getBlock(top + dir).id);
+					//return b.is_transparent && !(b.is_waterlogged || b.is_waterlogged);
+					return b.shadow_edges == 0;
+				};
+				uint8_t north = shadow_edges[0] && shadow_edge(render_view->getRotation().getNorth());
+				uint8_t south = shadow_edges[1] && shadow_edge(render_view->getRotation().getSouth());
+				uint8_t east = shadow_edges[2] && shadow_edge(render_view->getRotation().getEast());
+				uint8_t west = shadow_edges[3] && shadow_edge(render_view->getRotation().getWest());
+				uint8_t bottom = shadow_edges[4] && shadow_edge(render_view->getRotation().getBottom());
+
+				if (north + south + east + west + bottom != 0) {
+					int f = block_image->shadow_edges;
+					north *= shadow_edges[0] * f;
+					south *= shadow_edges[1] * f;
+					east *= shadow_edges[2] * f;
+					west *= shadow_edges[3] * f;
+					bottom *= shadow_edges[4] * f;
+					blockImageShadowEdges(tile_image.image, uv_image,
+						north, south, east, west, bottom);
+				}
+			}
+
+			// let the render mode do their magic with the block image
+			//render_mode->draw(node.image, node.pos, id, data);
+			render_mode->draw(tile_image.image, *block_image, tile_image.pos, id);
+
 		} else {
 			// Clear out the tile from previous rendering
 			std::fill(tile_image.image.data.begin(), tile_image.image.data.end(), 0);
 		}
+
 
 		if (block_image->is_waterlogged) {
 			// assert( !(water_top && water_south && water_west) );
@@ -285,6 +314,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			}
 
 			uint32_t biome_color = getBiomeColor(top, waterlog_full_image, current_chunk);
+			biome_color = rgba(rgba_red(biome_color), rgba_green(biome_color), rgba_blue(biome_color), (render_view->getWaterOpacity() * 255));
 
 			std::vector<RGBAPixel>::const_iterator pit      = waterlog->data.begin();
 			std::vector<RGBAPixel>::const_iterator pitend   = waterlog->data.end();
@@ -298,7 +328,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 				{
 					RGBAPixel p = *pit;
 					if (p) {
-						p = rgba_multiply(p, biome_color);
+						p = rgba_multiply_with_alpha(p, biome_color);
 					}
 					*pdestit = p;
 					pit ++;
@@ -330,7 +360,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 								break;
 						}
 						if (p) {
-							p = rgba_multiply(p, biome_color);
+							p = rgba_multiply_with_alpha(p, biome_color);
 						}
 					}
 					*pdestit = p;
@@ -343,33 +373,6 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			blockImageBlendZBuffered(tile_image.image, uv_image, waterLogTinted, *waterlog_uv);
 		}
 
-		if (block_image->shadow_edges > 0) {
-			auto shadow_edge = [this, top](const mc::BlockPos& dir) {
-				const BlockImage& b = block_images->getBlockImage(getBlock(top + dir).id);
-				//return b.is_transparent && !(b.is_waterlogged || b.is_waterlogged);
-				return b.shadow_edges == 0;
-			};
-			uint8_t north = shadow_edges[0] && shadow_edge(render_view->getRotation().getNorth());
-			uint8_t south = shadow_edges[1] && shadow_edge(render_view->getRotation().getSouth());
-			uint8_t east = shadow_edges[2] && shadow_edge(render_view->getRotation().getEast());
-			uint8_t west = shadow_edges[3] && shadow_edge(render_view->getRotation().getWest());
-			uint8_t bottom = shadow_edges[4] && shadow_edge(render_view->getRotation().getBottom());
-
-			if (north + south + east + west + bottom != 0) {
-				int f = block_image->shadow_edges;
-				north *= shadow_edges[0] * f;
-				south *= shadow_edges[1] * f;
-				east *= shadow_edges[2] * f;
-				west *= shadow_edges[3] * f;
-				bottom *= shadow_edges[4] * f;
-				blockImageShadowEdges(tile_image.image, uv_image,
-					north, south, east, west, bottom);
-			}
-		}
-
-		// let the render mode do their magic with the block image
-		//render_mode->draw(node.image, node.pos, id, data);
-		render_mode->draw(tile_image.image, *block_image, tile_image.pos, id);
 		tile_images.push_back(tile_image);
 
 		// if this block is not transparent, then stop looking for more blocks
