@@ -39,7 +39,7 @@ RegionFile::RegionFile(const std::string& filename)
 	// !! Disabled for now as it's a fixed value (so far ...)
 	// if (read()) {
 	// 	int yfile = lowestY();
-	// 	regionpos.y = MIN(regionpos.y,yfile);
+	// 	regionpos.y = std::min(regionpos.y,yfile);
 	// }
 }
 
@@ -340,7 +340,7 @@ int RegionFile::lowestY() {
 				continue;
 			}
 			int ychunk = nbt.findTag<nbt::TagInt>("yPos").payload;
-			y = MIN(y, ychunk);
+			y = std::min(y, ychunk);
 		} catch (const nbt::NBTError& err) {
 			LOG(ERROR) << "Unable to read chunk at " << pos << ": " << err.what();
 			continue;
