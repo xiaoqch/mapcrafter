@@ -103,7 +103,7 @@ void Biome::initializeBiomes() {
 	// put all biomes with their IDs into the array with all possible biomes
 	for (size_t i = 0; i < BIOMES_SIZE; i++) {
 		const Biome* biome = &BIOMES[i];
-		biome_names.insert_or_assign(biome->getName(), i);
+		biome_names[biome->getName()] = i;
 	}
 	biomes_initialized = true;
 }
