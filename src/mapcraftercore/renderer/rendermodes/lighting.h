@@ -66,8 +66,6 @@ struct FaceCorners {
 	FaceCorners(const CornerNeighbors& corner1);
 };
 
-extern const FaceCorners CORNERS_LEFT, CORNERS_RIGHT, CORNERS_TOP, CORNERS_BOTTOM;
-
 class LightingData {
 public:
 	LightingData(uint8_t block_light = 0, uint8_t sky_light = 15);
@@ -96,12 +94,13 @@ public:
 			double lighting_water_intensity, bool simulate_sun_light);
 	virtual ~LightingRenderMode();
 
-	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id);
+	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation);
 
 private:
 	bool day;
 	double lighting_intensity, lighting_water_intensity;
 	bool simulate_sun_light;
+	FaceCorners CORNERS_LEFT, CORNERS_RIGHT, CORNERS_TOP, CORNERS_BOTTOM;
 
 	/**
 	 * Calculates the color of the light of a block.
@@ -140,13 +139,13 @@ private:
 	 * right face (if not covered by another, not transparent, block).
 	 */
 	void doSmoothLight(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos,
-			uint16_t id, bool use_bottom_corners);
+			uint16_t id, bool use_bottom_corners, const RenderRotation& rotation);
 
 	/**
 	 * Applies a simple lighting to a block by coloring the whole block with the lighting
 	 * color of the block.
 	 */
-	void doSimpleLight(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id);
+	void doSimpleLight(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation);
 };
 
 } /* namespace render */

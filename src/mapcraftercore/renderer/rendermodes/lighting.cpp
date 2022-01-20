@@ -30,30 +30,6 @@
 namespace mapcrafter {
 namespace renderer {
 
-// TODO
-// Find out why the mc::DIR_* constants are all set to (0, 0, 0) !
-
-// corner definitions of the faces
-extern const FaceCorners CORNERS_LEFT = FaceCorners(CornerNeighbors(
-		/*mc::DIR_WEST + mc::DIR_NORTH + mc::DIR_TOP*/ mc::BlockPos(-1, -1, 1),
-		/*mc::DIR_SOUTH*/ mc::BlockPos(0, 1, 0),
-		/*mc::DIR_BOTTOM*/ mc::BlockPos(0, 0, -1)));
-
-extern const FaceCorners CORNERS_RIGHT = FaceCorners(CornerNeighbors(
-		/*mc::DIR_SOUTH + mc::DIR_WEST + mc::DIR_TOP*/ mc::BlockPos(-1, 1, 1),
-		/*mc::DIR_EAST*/ mc::BlockPos(1, 0, 0),
-		/*mc::DIR_BOTTOM*/ mc::BlockPos(0, 0, -1)));
-
-extern const FaceCorners CORNERS_TOP = FaceCorners(CornerNeighbors(
-		/*mc::DIR_TOP + mc::DIR_NORTH + mc::DIR_WEST*/ mc::BlockPos(-1, -1, 1),
-		/*mc::DIR_EAST*/ mc::BlockPos(1, 0, 0),
-		/*mc::DIR_SOUTH*/ mc::BlockPos(0, 1, 0)));
-
-extern const FaceCorners CORNERS_BOTTOM = FaceCorners(CornerNeighbors(
-		/*mc::DIR_NORTH + mc::DIR_WEST*/ mc::BlockPos(-1, -1, 0),
-		/*mc::DIR_EAST*/ mc::BlockPos(1, 0, 0),
-		/*mc::DIR_SOUTH*/ mc::BlockPos(0, 1, 0)));
-
 CornerNeighbors::CornerNeighbors() {
 }
 
@@ -162,7 +138,24 @@ LightingRenderMode::~LightingRenderMode() {
 }
 
 void LightingRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
-		const mc::BlockPos& pos, uint16_t id) {
+		const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {
+
+	CORNERS_LEFT = FaceCorners(CornerNeighbors(
+		/*mc::DIR_WEST + mc::DIR_NORTH + mc::DIR_TOP*/ rotation.rotate(mc::BlockPos(-1, -1, 1)),
+		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockPos(0, 1, 0)),
+		/*mc::DIR_BOTTOM*/ rotation.rotate(mc::BlockPos(0, 0, -1))));
+	CORNERS_RIGHT = FaceCorners(CornerNeighbors(
+		/*mc::DIR_SOUTH + mc::DIR_WEST + mc::DIR_TOP*/ rotation.rotate(mc::BlockPos(-1, 1, 1)),
+		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockPos(1, 0, 0)),
+		/*mc::DIR_BOTTOM*/ rotation.rotate(mc::BlockPos(0, 0, -1))));
+	CORNERS_TOP = FaceCorners(CornerNeighbors(
+		/*mc::DIR_TOP + mc::DIR_NORTH + mc::DIR_WEST*/ rotation.rotate(mc::BlockPos(-1, -1, 1)),
+		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockPos(1, 0, 0)),
+		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockPos(0, 1, 0))));
+	CORNERS_BOTTOM = FaceCorners(CornerNeighbors(
+		/*mc::DIR_NORTH + mc::DIR_WEST*/ rotation.rotate(mc::BlockPos(-1, -1, 0)),
+		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockPos(1, 0, 0)),
+		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockPos(0, 1, 0))));
 
 	//void blockImageMultiply(RGBAImage& block, const RGBAImage& uv_mask,
 	//		const CornerValues& factors_left, const CornerValues& factors_right, const CornerValues& factors_up);
@@ -186,21 +179,24 @@ void LightingRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
 	// - block image: side mask (3x bool)
 	// - ice needs to be treated a bit like water after all
 
+	float intensity = block_image.is_waterlogged ? lighting_water_intensity : lighting_intensity;
+
 	if (block_image.lighting_type == LightingType::SMOOTH) {
-		doSmoothLight(image, block_image, pos, id, false);
+		doSmoothLight(image, block_image, pos, id, false, rotation);
 	} else if (block_image.lighting_type == LightingType::SIMPLE) {
-		doSimpleLight(image, block_image, pos, id);
+		// doSmoothLight(image, block_image, pos, id, false, rotation);
+		doSimpleLight(image, block_image, pos, id, rotation);
 	} else if (block_image.lighting_type == LightingType::SMOOTH_TOP_REMAINING_SIMPLE) {
 		CornerValues id = {1.0, 1.0, 1.0, 1.0};
-		CornerValues up = getCornerColors(pos, CORNERS_TOP, lighting_intensity);
+		CornerValues up = getCornerColors(pos, CORNERS_TOP, intensity);
 		blockImageMultiply(image, block_image.uv_image(), id, id, up);
 
-		float factor = getLightingColor(pos, lighting_intensity);
+		float factor = getLightingColor(pos, intensity);
 		blockImageMultiplyExcept(image, block_image.uv_image(), FACE_UP_INDEX, factor);
 	} else if (block_image.lighting_type == LightingType::SMOOTH_BOTTOM) {
-		CornerValues left = getCornerColors(pos, CORNERS_LEFT, lighting_intensity);
-		CornerValues right = getCornerColors(pos, CORNERS_RIGHT, lighting_intensity);
-		CornerValues up = getCornerColors(pos, CORNERS_BOTTOM, lighting_intensity);
+		CornerValues left = getCornerColors(pos, CORNERS_LEFT, intensity);
+		CornerValues right = getCornerColors(pos, CORNERS_RIGHT, intensity);
+		CornerValues up = getCornerColors(pos, CORNERS_BOTTOM, intensity);
 		blockImageMultiply(image, block_image.uv_image(), left, right, up);
 	}
 }
@@ -262,7 +258,7 @@ CornerColors LightingRenderMode::getCornerColors(const mc::BlockPos& pos,
 }
 
 void LightingRenderMode::doSmoothLight(RGBAImage& image, const BlockImage& block_image,
-		const mc::BlockPos& pos, uint16_t id, bool use_bottom_corners) {
+		const mc::BlockPos& pos, uint16_t id, bool use_bottom_corners, const RenderRotation& rotation) {
 
 	// TODO adapt
 	// - light only visible faces
@@ -271,7 +267,7 @@ void LightingRenderMode::doSmoothLight(RGBAImage& image, const BlockImage& block
 	std::array<bool, 3> side_mask = block_image.side_mask;
 	bool under_water[3] = {false, false, false};
 
-	mc::BlockPos dirs[3] = {mc::DIR_WEST, mc::DIR_SOUTH, mc::DIR_TOP};
+	mc::BlockPos dirs[3] = {rotation.getWest(), rotation.getSouth(), rotation.getTop()};
 	for (int i = 0; i < 3; i++) {
 		if (side_mask[i]) {
 			const BlockImage& block = block_images->getBlockImage(getBlock(pos + dirs[i]).id);
@@ -300,7 +296,7 @@ void LightingRenderMode::doSmoothLight(RGBAImage& image, const BlockImage& block
 }
 
 void LightingRenderMode::doSimpleLight(RGBAImage& image, const BlockImage& block_image,
-		const mc::BlockPos& pos, uint16_t id) {
+		const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {
 	// TODO adapt how to consider underwater with waterlogged blocks?
 	// (some waterlogged blocks are rendered as if they weren't)
 

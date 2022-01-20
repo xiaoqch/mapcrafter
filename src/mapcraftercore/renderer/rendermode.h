@@ -77,11 +77,8 @@ public:
 	 * This method is called by the tile renderer so you can modify block images that
 	 * are about to be rendered.
 	 */
-	virtual void draw(RGBAImage& image, const mc::BlockPos& pos, uint16_t id,
-			uint16_t data) = 0;
-
 	virtual void draw(RGBAImage& image, const BlockImage& block_image,
-			const mc::BlockPos& pos, uint16_t id) {}
+			const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {}
 };
 
 /**
@@ -104,8 +101,7 @@ public:
 	/**
 	 * Dummy implementation of interface method.
 	 */
-	virtual void draw(RGBAImage& image, const mc::BlockPos& pos, uint16_t id, uint16_t data);
-	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id);
+	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation);
 
 protected:
 	mc::Block getBlock(const mc::BlockPos& pos, int get = mc::GET_ID);
@@ -144,9 +140,7 @@ public:
 	/**
 	 * Calls this method of each render mode.
 	 */
-	virtual void draw(RGBAImage& image, const mc::BlockPos& pos, uint16_t id, uint16_t data);
-
-	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id);
+	virtual void draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation);
 
 protected:
 	std::vector<RenderMode*> render_modes;

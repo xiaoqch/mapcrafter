@@ -57,12 +57,8 @@ void BaseRenderMode::initialize(const RenderView* render_view,
 	this->current_chunk = current_chunk;
 }
 
-void BaseRenderMode::draw(RGBAImage& image, const mc::BlockPos& pos,
-		uint16_t id, uint16_t data) {
-}
-
 void BaseRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
-		const mc::BlockPos& pos, uint16_t id) {
+		const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {
 }
 
 mc::Block BaseRenderMode::getBlock(const mc::BlockPos& pos, int get) {
@@ -91,17 +87,11 @@ bool MultiplexingRenderMode::isHidden(const mc::BlockPos& pos, const BlockImage&
 	return false;
 }
 
-void MultiplexingRenderMode::draw(RGBAImage& image, const mc::BlockPos& pos,
-		uint16_t id, uint16_t data) {
-	for (auto it = render_modes.begin(); it != render_modes.end(); ++it)
-		(*it)->draw(image, pos, id, data);
-}
-
 
 void MultiplexingRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
-		const mc::BlockPos& pos, uint16_t id) {
+		const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {
 	for (auto it = render_modes.begin(); it != render_modes.end(); ++it)
-		(*it)->draw(image, block_image, pos, id);
+		(*it)->draw(image, block_image, pos, id, rotation);
 }
 
 std::ostream& operator<<(std::ostream& out, RenderModeType render_mode) {

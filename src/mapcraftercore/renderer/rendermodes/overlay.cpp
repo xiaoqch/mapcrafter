@@ -33,7 +33,7 @@ OverlayRenderMode::OverlayRenderMode(OverlayMode overlay_mode)
 OverlayRenderMode::~OverlayRenderMode() {
 }
 
-void OverlayRenderMode::draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id) {
+void OverlayRenderMode::draw(RGBAImage& image, const BlockImage& block_image, const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {
 	// TODO handle some special cases, for example: colorize blocks under water?
 	if (overlay_mode == OverlayMode::PER_BLOCK) {
 		// simple mode where we just tint whole blocks
@@ -53,13 +53,13 @@ void OverlayRenderMode::draw(RGBAImage& image, const BlockImage& block_image, co
 		} else {
 			mc::Block top, left, right;
 			RGBAPixel color_top, color_left, color_right;
-			top = getBlock(pos + mc::DIR_TOP, mc::GET_ID);
-			left = getBlock(pos + mc::DIR_WEST, mc::GET_ID);
-			right = getBlock(pos + mc::DIR_SOUTH, mc::GET_ID);
-			color_top = getBlockColor(pos + mc::DIR_TOP, block_images->getBlockImage(top.id));
-			color_left = getBlockColor(pos + mc::DIR_WEST, block_images->getBlockImage(left.id));
-			color_right = getBlockColor(pos + mc::DIR_SOUTH, block_images->getBlockImage(right.id));
-			
+			top = getBlock(pos + rotation.getTop(), mc::GET_ID);
+			left = getBlock(pos + rotation.getWest(), mc::GET_ID);
+			right = getBlock(pos + rotation.getSouth(), mc::GET_ID);
+			color_top = getBlockColor(pos + rotation.getTop(), block_images->getBlockImage(top.id));
+			color_left = getBlockColor(pos + rotation.getWest(), block_images->getBlockImage(left.id));
+			color_right = getBlockColor(pos + rotation.getSouth(), block_images->getBlockImage(right.id));
+
 			if (rgba_alpha(color_top) != 0)
 				blockImageTintHighContrast(image, block_image.uv_image(), FACE_UP_INDEX, color_top);
 			if (rgba_alpha(color_left) != 0)

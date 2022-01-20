@@ -290,7 +290,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 
 			// let the render mode do their magic with the block image
 			//render_mode->draw(node.image, node.pos, id, data);
-			render_mode->draw(tile_image.image, *block_image, tile_image.pos, id);
+			render_mode->draw(tile_image.image, *block_image, tile_image.pos, id, render_view->getRotation());
 
 		} else {
 			// Clear out the tile from previous rendering
