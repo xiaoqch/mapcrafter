@@ -267,24 +267,27 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			if (block_image->shadow_edges > 0) {
 				auto shadow_edge = [this, top](const mc::BlockPos& dir) {
 					const BlockImage& b = block_images->getBlockImage(getBlock(top + dir).id);
-					//return b.is_transparent && !(b.is_waterlogged || b.is_waterlogged);
 					return b.shadow_edges == 0;
 				};
-				uint8_t north = shadow_edges[0] && shadow_edge(render_view->getRotation().getNorth());
-				uint8_t south = shadow_edges[1] && shadow_edge(render_view->getRotation().getSouth());
-				uint8_t east = shadow_edges[2] && shadow_edge(render_view->getRotation().getEast());
-				uint8_t west = shadow_edges[3] && shadow_edge(render_view->getRotation().getWest());
-				uint8_t bottom = shadow_edges[4] && shadow_edge(render_view->getRotation().getBottom());
+				uint8_t diff_top = (id != id_top);
+				uint8_t north = shadow_edge(render_view->getRotation().getNorth()) && diff_top;
+				uint8_t south = shadow_edge(render_view->getRotation().getSouth()) && diff_top;
+				uint8_t east = shadow_edge(render_view->getRotation().getEast()) && diff_top;
+				uint8_t west = shadow_edge(render_view->getRotation().getWest()) && diff_top;
+				uint8_t bottom = shadow_edge(render_view->getRotation().getBottom());
+				uint8_t bottomleft = bottom && (id != id_west);
+				uint8_t bottomright = bottom && (id != id_south);
 
-				if (north + south + east + west + bottom != 0) {
+				if (north + south + east + west + bottomleft + bottomright != 0) {
 					int f = block_image->shadow_edges;
 					north *= shadow_edges[0] * f;
 					south *= shadow_edges[1] * f;
 					east *= shadow_edges[2] * f;
 					west *= shadow_edges[3] * f;
-					bottom *= shadow_edges[4] * f;
+					bottomleft *= shadow_edges[4] * f;
+					bottomright *= shadow_edges[4] * f;
 					blockImageShadowEdges(tile_image.image, uv_image,
-						north, south, east, west, bottom);
+						north, south, east, west, bottomleft, bottomright);
 				}
 			}
 

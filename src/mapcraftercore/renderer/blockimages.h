@@ -90,7 +90,7 @@ void blockImageTintHighContrast(RGBAImage& block, const RGBAImage& mask, int fac
 void blockImageBlendZBuffered(RGBAImage& block, const RGBAImage& uv_mask,
 		const RGBAImage& top, const RGBAImage& top_uv_mask);
 void blockImageShadowEdges(RGBAImage& block, const RGBAImage& uv_mask,
-		uint8_t north, uint8_t south, uint8_t east, uint8_t west, uint8_t bottom);
+		uint8_t north, uint8_t south, uint8_t east, uint8_t west, uint8_t bottomleft, uint8_t bottomright);
 bool blockImageIsTransparent(const RGBAImage& block, const RGBAImage& uv_mask);
 std::array<bool, 3> blockImageGetSideMask(const RGBAImage& uv);
 

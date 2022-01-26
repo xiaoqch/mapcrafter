@@ -381,7 +381,7 @@ void blockImageBlendZBuffered(RGBAImage& block, const RGBAImage& uv_mask,
 }
 
 void blockImageShadowEdges(RGBAImage& block, const RGBAImage& uv_mask,
-		uint8_t north, uint8_t south, uint8_t east, uint8_t west, uint8_t bottom) {
+		uint8_t north, uint8_t south, uint8_t east, uint8_t west, uint8_t bottomleft, uint8_t bottomright) {
 	assert(block.getWidth() == uv_mask.getWidth());
 	assert(block.getHeight() == uv_mask.getHeight());
 
@@ -426,17 +426,12 @@ void blockImageShadowEdges(RGBAImage& block, const RGBAImage& uv_mask,
 		genalpha(FACE_UP_INDEX, east, 1.0 - u);
 		genalpha(FACE_UP_INDEX, west, u);
 
-		genalpha(FACE_LEFT_INDEX, bottom, 1.0 - v);
-		genalpha(FACE_RIGHT_INDEX, bottom, 1.0 - v);
+		genalpha(FACE_LEFT_INDEX, bottomleft, 1.0 - v);
+		genalpha(FACE_RIGHT_INDEX, bottomright, 1.0 - v);
 
 		#undef setalpha
 
 		pixel = rgba_multiply_scalar(pixel, 255 - alpha);
-		/*
-		if (alpha != 0) {
-			pixel = rgba_multiply(pixel, rgba(255 - alpha, 0, 0));
-		}
-		*/
 	}
 }
 

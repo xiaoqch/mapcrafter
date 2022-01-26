@@ -62,26 +62,41 @@ inline RGBAPixel rgba_average(RGBAPixel v1, RGBAPixel v2) {
 	return (v1 & 0xff000000) | sum;
 }
 
-// http://hugi.scene.org/online/hugi21/co32bcol.htm
 inline RGBAPixel rgba_multiply(RGBAPixel v1, RGBAPixel v2) {
-	uint32_t r = (((v1 & 0xff) * (v2 & 0xff) + 0xfe) >> 8) & 0xff;
-	uint32_t g = (((v1 & 0xff00) * (v2 & 0xff00) + 0xfe00) >> 16) & 0xff00;
-	uint32_t b = ((((uint64_t) (v1 & 0xff0000) * (v2 & 0xff0000)) + 0xfe0000) >> 24) & 0xff0000;
+	uint32_t r = ((((v1 & 0xff) + 0x01) * (v2 & 0xff)) >> 8) & 0xff;
+	uint32_t g = ((((v1 & 0xff00) + 0x0100) * (v2 & 0xff00)) >> 16) & 0xff00;
+	uint32_t b = ((((uint64_t) (v1 & 0xff0000) + 0x010000) * (v2 & 0xff0000)) >> 24) & 0xff0000;
 	return (v1 & 0xff000000) | r | g | b;
 }
 
 inline RGBAPixel rgba_multiply_with_alpha(RGBAPixel v1, RGBAPixel v2) {
-	uint32_t r = (((v1 & 0xff) * (v2 & 0xff) + 0xfe) >> 8) & 0xff;
-	uint32_t g = (((v1 & 0xff00) * (v2 & 0xff00) + 0xfe00) >> 16) & 0xff00;
-	uint32_t b = ((((uint64_t) (v1 & 0xff0000) * (v2 & 0xff0000)) + 0xfe0000) >> 24) & 0xff0000;
-	uint32_t a = ((((uint64_t) (v1 & 0xff000000) * (v2 & 0xff000000)) + 0xfe000000) >> 32) & 0xff000000;
+	uint32_t r = (((v1 & 0xff) + 0x01) * (v2 & 0xff) >> 8) & 0xff;
+	uint32_t g = (((v1 & 0xff00) + 0x0100)  * (v2 & 0xff00) >> 16) & 0xff00;
+	uint32_t b = ((((uint64_t) (v1 & 0xff0000) + 0x010000) * (v2 & 0xff0000)) >> 24) & 0xff0000;
+	uint32_t a = ((((uint64_t) (v1 & 0xff000000) + 0x01000000) * (v2 & 0xff000000)) >> 32) & 0xff000000;
 	return a | r | g | b;
 }
 
-// http://hugi.scene.org/online/hugi21/co32bcol.htm
+// Make sure 255 x 255 = 255 by adding 1 before the mult
+// Max color value : 255
+// (255+1) * 0 / 256 = 0
+// (255+1) * 1 / 256 = 1
+// ...
+// (255+1) * 254 / 256 = 254
+// (255+1) * 255 / 256 = 255
+//
+// Mid color value : 128
+// (128+1) * 0 / 256 = 0
+// (128+1) * 1 / 256 = 0
+// (128+1) * 2 / 256 = 1
+// ...
+// (128+1) * 128 / 256 = 64
+// ...
+// (128+1) * 254 / 256 = 127
+// (128+1) * 255 / 256 = 128
 inline RGBAPixel rgba_multiply_scalar(RGBAPixel value, uint32_t factor) {
-	uint32_t g = (((value & 0xff00) * factor + 0xfe00) >> 8) & 0xff00;
-	uint32_t br = (((value & 0xff00ff) * factor + 0xfe00fe) >> 8) & 0xff00ff;
+	uint32_t g = ((((value & 0xff00) + 0x0100) * factor) >> 8) & 0xff00;
+	uint32_t br = ((((value & 0xff00ff) + 0x010001) * factor) >> 8) & 0xff00ff;
 	uint32_t a = value & 0xff000000;
 	return a | g | br;
 }
