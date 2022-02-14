@@ -58,9 +58,10 @@ private:
 	bool swamp_mod, forest_mod;
 
 	static const mc::JavaSimplexGenerator SWAMP_GRASS_NOISE;
-	static void initializeBiomes();
 
 public:
+	static void initializeBiomes();
+
 	Biome(std::string name = "mapcrafter:unknown", double temperature = 0.5, double rainfall = 0.5,
 			RGBAPixel grass_tint = default_grass, RGBAPixel foliage_tint = default_foliage, RGBAPixel water_tint = default_water,
 			bool swamp_mod = false, bool forest_mod = false);
@@ -70,7 +71,6 @@ public:
 
 	static uint16_t getBiomeId(std::string name);
 	static const Biome& getBiome(uint16_t id);
-	static const Biome& getBiome(std::string name);
 };
 
 // different Minecraft Biomes

@@ -95,17 +95,18 @@ RGBAPixel Biome::getColor(const mc::BlockPos& pos, const ColorMapType& color_typ
 
 // array with all possible biomes
 // empty/unknown biomes in this array have the ID 0, Name mapcrafter:unknown
-static bool biomes_initialized;
+static bool biomes_initialized = false;
 static boost::unordered_map<std::string, uint16_t> biome_names;
 static std::set<std::string> unknown_biomes;
 
 void Biome::initializeBiomes() {
+	if (!biomes_initialized) return;
+	biomes_initialized = true;
 	// put all biomes with their IDs into the array with all possible biomes
 	for (size_t i = 0; i < BIOMES_SIZE; i++) {
 		const Biome* biome = &BIOMES[i];
 		biome_names[biome->getName()] = i;
 	}
-	biomes_initialized = true;
 }
 
 const Biome& Biome::getBiome(uint16_t id) {
@@ -115,16 +116,7 @@ const Biome& Biome::getBiome(uint16_t id) {
 	return BIOMES[DEFAULT_BIOME_ID];
 }
 
-const Biome& Biome::getBiome(std::string name) {
-	return Biome::getBiome(Biome::getBiomeId(name));
-}
-
 uint16_t Biome::getBiomeId(std::string name) {
-	// initialize biomes at the first time we access them
-	if (!biomes_initialized)
-		initializeBiomes();
-
-	// check if this biome exists and return the default biome otherwise
 	auto bit = biome_names.find(name);
 	if ( bit != biome_names.end())
 		return biome_names[name];

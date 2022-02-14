@@ -22,6 +22,7 @@
 #include "blockimages.h"
 #include "tilerenderworker.h"
 #include "renderview.h"
+#include "../renderer/biomes.h"
 #include "../config/loggingconfig.h"
 #include "../mc/blockstate.h"
 #include "../thread/impl/singlethread.h"
@@ -329,6 +330,8 @@ void RenderManager::renderMap(const std::string& map, RenderRotation::Direction 
 			return;
 		}
 	}
+
+	renderer::Biome::initializeBiomes();
 
 	RenderContext context;
 	context.output_dir = output_dir;
