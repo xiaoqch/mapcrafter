@@ -64,6 +64,10 @@ bool RegionFile::readHeaders(std::ifstream& file, uint32_t chunk_offsets[1024]) 
 	uint32_t header[2 * 32 * 32];
 
 	// make sure the region file has a header
+	if (filesize == 0) {
+		// Simply ignore the file if empty. Some chunk management tools can empty all chunks but doesn't erase the file, so simply ignore it
+		return false;
+	}
 	if (filesize < sizeof(header)) {
 		LOG(ERROR) << "Corrupt region '" << filename << "': Header is too short.";
 		return false;
