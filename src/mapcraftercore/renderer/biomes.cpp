@@ -100,7 +100,7 @@ static boost::unordered_map<std::string, uint16_t> biome_names;
 static std::set<std::string> unknown_biomes;
 
 void Biome::initializeBiomes() {
-	if (!biomes_initialized) return;
+	if (biomes_initialized) return;
 	biomes_initialized = true;
 	// put all biomes with their IDs into the array with all possible biomes
 	for (size_t i = 0; i < BIOMES_SIZE; i++) {
