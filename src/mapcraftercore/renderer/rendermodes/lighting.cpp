@@ -189,15 +189,15 @@ void LightingRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
 	} else if (block_image.lighting_type == LightingType::SMOOTH_TOP_REMAINING_SIMPLE) {
 		CornerValues id = {1.0, 1.0, 1.0, 1.0};
 		CornerValues up = getCornerColors(pos, CORNERS_TOP, intensity);
-		blockImageMultiply(image, block_image.uv_image(), id, id, up);
+		blockImageMultiply(image, block_image.uv_image(0), id, id, up);
 
 		float factor = getLightingColor(pos, intensity);
-		blockImageMultiplyExcept(image, block_image.uv_image(), FACE_UP_INDEX, factor);
+		blockImageMultiplyExcept(image, block_image.uv_image(0), FACE_UP_INDEX, factor);
 	} else if (block_image.lighting_type == LightingType::SMOOTH_BOTTOM) {
 		CornerValues left = getCornerColors(pos, CORNERS_LEFT, intensity);
 		CornerValues right = getCornerColors(pos, CORNERS_RIGHT, intensity);
 		CornerValues up = getCornerColors(pos, CORNERS_BOTTOM, intensity);
-		blockImageMultiply(image, block_image.uv_image(), left, right, up);
+		blockImageMultiply(image, block_image.uv_image(0), left, right, up);
 	}
 }
 
@@ -292,7 +292,7 @@ void LightingRenderMode::doSmoothLight(RGBAImage& image, const BlockImage& block
 		up = getCornerColors(pos, use_bottom_corners ? CORNERS_BOTTOM : CORNERS_TOP,
 				under_water[2] ? lighting_water_intensity : lighting_intensity);
 	}
-	blockImageMultiply(image, block_image.uv_image(), left, right, up);
+	blockImageMultiply(image, block_image.uv_image(0), left, right, up);
 }
 
 void LightingRenderMode::doSimpleLight(RGBAImage& image, const BlockImage& block_image,
