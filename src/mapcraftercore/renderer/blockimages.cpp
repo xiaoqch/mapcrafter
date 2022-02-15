@@ -544,18 +544,27 @@ bool RenderedBlockImages::loadBlockImages(fs::path path, std::string view, int r
 
 		std::vector<std::string> colors = util::split(block_info["color"],':');
 		std::vector<std::string> uvs = util::split(block_info["uv"],':');
-		assert(colors.size() == uvs.size() && "Block info file corrupted");
+		std::vector<std::string> weights = util::split(block_info["weight"],':');
 		std::size_t variantCnt = colors.size();
-		std::vector<uint32_t> image_index(variantCnt), image_uv_index(variantCnt);
+		if (weights.size()==0) weights = std::vector<std::string>(variantCnt,"1");
+		assert(uvs.size() == variantCnt && weights.size() == variantCnt && "Block info file corrupted");
+		std::vector<uint32_t> image_index(variantCnt), image_uv_index(variantCnt), image_weight(variantCnt);
+		uint32_t total_weight = 0;
+		double_t weight_factor = 1.0;
 		for (std::size_t cnt=0; cnt<variantCnt; cnt++) {
 			image_index[cnt] = util::as<int>(colors[cnt]);
 			image_uv_index[cnt] = util::as<int>(uvs[cnt]);
+			int weight = util::as<int>(weights[cnt]);
+			image_weight[cnt] = weight;
+			total_weight += weight;
 		}
+		weight_factor = double_t(1.0) / double_t(total_weight);
 
 		mc::BlockState block_state = mc::BlockState::parse(block_name, variant);
 		BlockImage& block = *new BlockImage();;
 		block.image(image_index);
 		block.uv_image(image_uv_index);
+		block.weight_image(image_weight, weight_factor);
 
 		block.is_biome = block_info.count("biome_type");
 		if (block.is_biome) {
@@ -738,14 +747,14 @@ void RenderedBlockImages::prepareBlockImages() {
 			}
 		}
 
-		block.side_mask = blockImageGetSideMask(block.uv_image());
-		block.is_transparent = blockImageIsTransparent(block.image(), solid.uv_image());
+		block.side_mask = blockImageGetSideMask(block.uv_image(0));
+		block.is_transparent = blockImageIsTransparent(block.image(0), solid.uv_image(0));
 
 		if (block.is_biome && block.is_masked_biome) {
 			std::string mask_name = name + "_biome_mask";
 			uint16_t mask_id = block_registry.getBlockID(mc::BlockState::parse(mask_name, block_state.getVariantDescription()));
 			assert(block_images.size() > mask_id && block_images[mask_id] != nullptr);
-			block.biome_mask = &block_images[mask_id]->image();
+			block.biome_mask = &block_images[mask_id]->image(0);
 		}
 
 		if (!block.lighting_specified) {
@@ -788,7 +797,7 @@ void RenderedBlockImages::runBenchmark() {
 	CornerValues up = {0.5, 1.0, 0.6, 0.8};
 
 	std::chrono::time_point<clock_> begin = clock_::now();
-	const RGBAImage& image = solid.image();
+	const RGBAImage& image = solid.image(0);
 	RGBAImage solid_image(image.getHeight(), image.getWidth());
 	solid_image.simpleBlit(image,0,0);
 
@@ -811,7 +820,7 @@ void RenderedBlockImages::runBenchmark() {
 		// 6.345s mit rgb_multiply_scalar inline
 		// 6.377s mit rgba_multiply_scalar ohne f+1
 		// 6.126s doch wenn der alpha check drin ist
-		blockImageMultiply(solid_image, solid.uv_image(), left, right, up);
+		blockImageMultiply(solid_image, solid.uv_image(0), left, right, up);
 	}
 
 	double elapsed = std::chrono::duration_cast<second_>(clock_::now() - begin).count();

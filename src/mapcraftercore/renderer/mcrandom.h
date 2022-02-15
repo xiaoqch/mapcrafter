@@ -20,6 +20,8 @@
 #ifndef MCRANDOM_H_
 #define MCRANDOM_H_
 
+#include <sys/types.h>
+
 namespace mapcrafter
 {
   namespace renderer
@@ -28,24 +30,24 @@ namespace mapcrafter
     class MCRandom
     {
     private:
-      long seed;
+      int64_t seed;
 
     public:
-      MCRandom(long seed);
-      MCRandom(long x, long y, long z);
+      MCRandom(int64_t seed);
+      MCRandom(int32_t x, int32_t y, int32_t z);
 
       // Return the next value
-      long nextLong();
+      int64_t nextLong();
 
     protected:
-      long next(long bits);
+      int32_t next(int16_t bits);
 
-      static const long mult = 0x5DEECE66DL;
-      static const long add = 0xBL;
-      static const long mask = (1L << 48) - 1;
+      static const int64_t mult = 0x5DEECE66DL;
+      static const int64_t add = 0xBL;
+      static const int64_t mask = (1L << 48) - 1;
 
     private:
-      static long initialScramble(long seed);
+      static int64_t initialScramble(int64_t seed);
     };
 
   }

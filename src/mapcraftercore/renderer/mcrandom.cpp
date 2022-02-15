@@ -24,38 +24,40 @@ namespace mapcrafter
   namespace renderer
   {
 
-    MCRandom::MCRandom(long seed)
+    MCRandom::MCRandom(int64_t seed)
     {
       this->seed = initialScramble(seed);
     }
 
-    MCRandom::MCRandom(long x, long y, long z)
+    MCRandom::MCRandom(int32_t x, int32_t y, int32_t z)
     {
-      long seed = (long)(x * 3129871L) ^ (long)z * 116129781L ^ (long)y;
+      int64_t seed = (int64_t)(x * 3129871) ^ (int64_t)z * 116129781L ^ (int64_t)y;
       seed = seed * seed * 42317861L + seed * 11L;
       seed >>= 16;
       this->seed = initialScramble(seed);
     }
 
-    long MCRandom::initialScramble(long seed)
+    int64_t MCRandom::initialScramble(int64_t seed)
     {
       return (seed ^ MCRandom::mult) & MCRandom::mask;
     }
 
-    long MCRandom::nextLong()
+    int64_t MCRandom::nextLong()
     {
-      return ((long)(next(32)) << 32) + next(32);
+      int64_t mult = next(32);
+      int64_t added = next(32);
+      return (mult << 32) + added;
     }
 
-    long MCRandom::next(long bits)
+    int32_t MCRandom::next(int16_t bits)
     {
-      long oldseed, nextseed;
+      int64_t oldseed, nextseed;
 
       oldseed = this->seed;
       nextseed = (oldseed * MCRandom::mult + MCRandom::add) & MCRandom::mask;
       this->seed = nextseed;
 
-      return (long)(nextseed >> (48 - bits));
+      return (int32_t)(nextseed >> (48 - bits));
     }
 
   }

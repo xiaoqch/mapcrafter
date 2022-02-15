@@ -47,7 +47,7 @@ TileRenderer::TileRenderer(const RenderView* render_view, mc::BlockStateRegistry
 			block_images->getBlockImage(
 				block_registry.getBlockID(
 					mc::BlockState::parse("minecraft:water_mask", "level=2" )))),
-		tile_image(waterlog_full_image.image().width, waterlog_full_image.image().height),
+		tile_image(waterlog_full_image.image(0).width, waterlog_full_image.image(0).height),
 		waterLogTinted(tile_image.image.width, tile_image.image.height) {
 	assert(block_images);
 	render_mode->initialize(render_view, images, world, &current_chunk);
@@ -200,11 +200,12 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			solid_top = !block_image_top->is_transparent;
 		}
 
-		// Retrieve the image to print. Not exactly how it's rendered in Minecraft, but still does the block variation correctly
-		int alt = 0;
-		if (block_image->images_idx.size() != 1) {
+		// Retrieve the image to print. Now exactly how it's rendered in Minecraft
+		int32_t alt = 0;
+		if (block_image->images_idx.size() > 1) {
 			MCRandom rnd(top.x,top.y,top.z);
-			alt = abs(rnd.nextLong());
+			alt = abs((int32_t)rnd.nextLong());
+			alt = block_image->variant_2_index(alt);
 		}
 		const RGBAImage& image = block_image->image(alt);
 		const RGBAImage& uv_image = block_image->uv_image(alt);
@@ -227,10 +228,6 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 				strip_up    = id == id_top;
 				strip_right = id == id_south;
 				strip_left  = id == id_west;
-			// } else if (!block_image->is_transparent) {
-			// 	strip_up    = block_images->getBlockImage(id_top).is_transparent   == false;
-			// 	strip_right = block_images->getBlockImage(id_south).is_transparent == false;
-			// 	strip_left  = block_images->getBlockImage(id_west).is_transparent  == false;
 			}
 
 			if (strip_up || strip_left || strip_right) {
@@ -308,12 +305,12 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			const RGBAImage* waterlog_uv;
 			if (water_top || solid_top) {
 				// This will be displayed as full water
-				waterlog = &waterlog_full_image.image();
-				waterlog_uv = &waterlog_full_image.uv_image();
+				waterlog = &waterlog_full_image.image(0);
+				waterlog_uv = &waterlog_full_image.uv_image(0);
 			} else {
 				// That one will be displayed a bit lower to look like a shore line
-				waterlog = &waterlog_shore_image.image();
-				waterlog_uv = &waterlog_shore_image.uv_image();
+				waterlog = &waterlog_shore_image.image(0);
+				waterlog_uv = &waterlog_shore_image.uv_image(0);
 			}
 
 			uint32_t biome_color = getBiomeColor(top, waterlog_full_image, current_chunk);

@@ -127,22 +127,48 @@ struct BlockImage {
 	bool has_faulty_lighting;
 
 	int shadow_edges;
+	double_t weight_total;
+	double_t weight_factor;
 
-	const RGBAImage& image(int variant=0) const {
-		return *(BlockAtlas::instance().GetImage(images_idx[abs(variant) % images_idx.size()]));
+	const int variant_2_index(int32_t variant) const {
+		double_t _dummy_;
+		double_t weight = modf(double_t(abs(variant)) * weight_factor, &_dummy_);
+		int i = 0;
+		while (true) {
+			weight -= images_weights[i];
+			if (weight < 0) break;
+			i ++;
+		}
+		assert(i<(int32_t)images_idx.size());
+		return i;
+	}
+
+	const RGBAImage& image(int32_t idx) const {
+		assert(idx<(int32_t)images_idx.size());
+		return *(BlockAtlas::instance().GetImage(images_idx[idx]));
 	}
 	void image(std::vector<uint32_t>& indexes) {
 		images_idx = indexes;
 	}
-	const RGBAImage& uv_image(int variant=0) const {
-		return *(BlockAtlas::instance().GetImage(uv_images_idx[abs(variant) % uv_images_idx.size()]));
+	const RGBAImage& uv_image(int32_t idx) const {
+		assert(idx<(int32_t)images_idx.size());
+		return *(BlockAtlas::instance().GetImage(uv_images_idx[idx]));
 	}
 	void uv_image(std::vector<uint32_t>& indexes) {
 		uv_images_idx = indexes;
 	}
+	void weight_image(std::vector<uint32_t>& weights, double_t factor) {
+		images_weights = std::vector<double_t>(weights.size());
+		for (size_t i = 0; i < weights.size(); i++)
+		{
+			images_weights[i] = factor * weights[i];
+		}
+		weight_factor = factor;
+	}
 
 	std::vector<uint32_t> images_idx;
 	std::vector<uint32_t> uv_images_idx;
+	std::vector<double_t> images_weights;
 };
 
 class RenderedBlockImages : public BlockImages {
@@ -154,8 +180,8 @@ public:
 	//virtual RGBAImage exportBlocks() const {}
 	virtual bool isBlockTransparent(uint16_t id, uint16_t data) const { return false; };
 	virtual bool hasBlock(uint16_t id, uint16_t) const { return true; };
-	virtual const RGBAImage& getBlock(uint16_t id, uint16_t data, uint16_t extra_data = 0) const { return unknown_block.image(); };
-	virtual RGBAImage getBiomeBlock(uint16_t id, uint16_t data, const Biome& biome, uint16_t extra_data = 0) const { return unknown_block.image(); };
+	virtual const RGBAImage& getBlock(uint16_t id, uint16_t data, uint16_t extra_data = 0) const { return unknown_block.image(0); };
+	virtual RGBAImage getBiomeBlock(uint16_t id, uint16_t data, const Biome& biome, uint16_t extra_data = 0) const { return unknown_block.image(0); };
 	virtual int getMaxWaterPreblit() const { return 0; };
 	//virtual int getBlockSize() const {};
 
