@@ -54,8 +54,8 @@ private:
 	const RenderView* render_view;
 	int draw_x, draw_y;
 
-	mc::BlockPos tile_dir;
-	mc::BlockPos tile_rewind;
+	mc::BlockDir tile_dir;
+	mc::BlockDir tile_rewind;
 
 	static mc::ChunkPos tile2Pos(int r, int c, const RenderRotation& rotation);
 	mc::ChunkPos tile2Pos(int r, int c) const;

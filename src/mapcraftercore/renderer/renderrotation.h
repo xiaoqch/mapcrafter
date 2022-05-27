@@ -53,12 +53,12 @@ class RenderRotation {
 
 	// All directions rotated
 	const Direction     getRotation() const { return rotation; }
-	const mc::BlockPos& getNorth() const { return north; }
-	const mc::BlockPos& getEast() const { return east; }
-	const mc::BlockPos& getSouth() const { return south; }
-	const mc::BlockPos& getWest() const { return west; }
-	const mc::BlockPos& getTop() const { return top; }
-	const mc::BlockPos& getBottom() const { return bottom; }
+	const mc::BlockDir& getNorth() const { return north; }
+	const mc::BlockDir& getEast() const { return east; }
+	const mc::BlockDir& getSouth() const { return south; }
+	const mc::BlockDir& getWest() const { return west; }
+	const mc::BlockDir& getTop() const { return top; }
+	const mc::BlockDir& getBottom() const { return bottom; }
 
 	const mc::BlockPos rotate(const mc::BlockPos pos) const {
 		switch (getRotation()) {
@@ -71,6 +71,20 @@ class RenderRotation {
 				return mc::BlockPos(-pos.x, -pos.z, pos.y);
 			case BOTTOM_LEFT:
 				return mc::BlockPos(-pos.z, +pos.x, pos.y);
+		}
+	}
+
+	const mc::BlockDir rotate(const mc::BlockDir dir) const {
+		switch (getRotation()) {
+			default:
+			case TOP_LEFT:
+				return dir;
+			case TOP_RIGHT:
+				return mc::BlockDir(+dir.z, -dir.x, dir.y);
+			case BOTTOM_RIGHT:
+				return mc::BlockDir(-dir.x, -dir.z, dir.y);
+			case BOTTOM_LEFT:
+				return mc::BlockDir(-dir.z, +dir.x, dir.y);
 		}
 	}
 
@@ -99,12 +113,12 @@ class RenderRotation {
 	}
 
 	Direction    rotation;
-	mc::BlockPos north;
-	mc::BlockPos east;
-	mc::BlockPos south;
-	mc::BlockPos west;
-	mc::BlockPos top;
-	mc::BlockPos bottom;
+	mc::BlockDir north;
+	mc::BlockDir east;
+	mc::BlockDir south;
+	mc::BlockDir west;
+	mc::BlockDir top;
+	mc::BlockDir bottom;
 };
 
 } /* namespace renderer */

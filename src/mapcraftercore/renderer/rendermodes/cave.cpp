@@ -26,7 +26,7 @@
 namespace mapcrafter {
 namespace renderer {
 
-CaveRenderMode::CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs, const RenderRotation& rotation )
+CaveRenderMode::CaveRenderMode(const std::vector<mc::BlockDir>& hidden_dirs, const RenderRotation& rotation )
 	: hidden_dirs(hidden_dirs), rotation(rotation) {
 }
 
@@ -34,7 +34,7 @@ CaveRenderMode::~CaveRenderMode() {
 }
 
 bool CaveRenderMode::isHidden(const mc::BlockPos& pos, const BlockImage& block_image) {
-	mc::BlockPos directions[6] = {
+	mc::BlockDir directions[6] = {
 		rotation.getNorth(), rotation.getSouth(), rotation.getEast(), rotation.getWest(),
 		rotation.getTop(), rotation.getBottom()
 	};

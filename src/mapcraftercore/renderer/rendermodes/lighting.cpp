@@ -33,8 +33,8 @@ namespace renderer {
 CornerNeighbors::CornerNeighbors() {
 }
 
-CornerNeighbors::CornerNeighbors(const mc::BlockPos& pos1, const mc::BlockPos& dir1,
-		const mc::BlockPos& dir2)
+CornerNeighbors::CornerNeighbors(const mc::BlockDir& pos1, const mc::BlockDir& dir1,
+		const mc::BlockDir& dir2)
 	: pos1(pos1),
 	  pos2(pos1 + dir1),
 	  pos3(pos1 + dir2),
@@ -43,8 +43,8 @@ CornerNeighbors::CornerNeighbors(const mc::BlockPos& pos1, const mc::BlockPos& d
 	  dir1(dir1), dir2(dir2) {
 }
 
-CornerNeighbors CornerNeighbors::addPos(const mc::BlockPos& pos) const {
-	return CornerNeighbors(this->pos1 + pos, dir1, dir2);
+CornerNeighbors CornerNeighbors::addDir(const mc::BlockDir& dir) const {
+	return CornerNeighbors(this->pos1 + dir, dir1, dir2);
 }
 
 FaceCorners::FaceCorners() {
@@ -52,9 +52,9 @@ FaceCorners::FaceCorners() {
 
 FaceCorners::FaceCorners(const CornerNeighbors& corner1)
 	: corner1(corner1),
-	  corner2(corner1.addPos(corner1.dir1)),
-	  corner3(corner1.addPos(corner1.dir2)),
-	  corner4(corner1.addPos(corner1.dir1 + corner1.dir2)) {
+	  corner2(corner1.addDir(corner1.dir1)),
+	  corner3(corner1.addDir(corner1.dir2)),
+	  corner4(corner1.addDir(corner1.dir1 + corner1.dir2)) {
 }
 
 LightingData::LightingData(uint8_t block_light, uint8_t sky_light)
@@ -88,7 +88,7 @@ LightingData LightingData::estimate(const mc::Block& block,
 	uint8_t block_light = 0, sky_light = 0;
 
 	// get the sky light from the block above
-	mc::BlockPos off(0, 0, 0);
+	mc::BlockDir off(0, 0, 0);
 	mc::Block above;
 	while (++off.y) {
 		above = world->getBlock(block.pos + off, current_chunk,
@@ -111,7 +111,7 @@ LightingData LightingData::estimate(const mc::Block& block,
 	for (int dx = -1; dx <= 1; dx++)
 		for (int dz = -1; dz <= 1; dz++)
 			for (int dy = -1; dy <= 1; dy++) {
-				mc::Block other = world->getBlock(block.pos + mc::BlockPos(dx, dz, dy),
+				mc::Block other = world->getBlock(block.pos + mc::BlockDir(dx, dz, dy),
 						current_chunk, mc::GET_ID | mc::GET_BLOCK_LIGHT);
 				const BlockImage& other_block = block_images->getBlockImage(other.id);
 				if ((other_block.is_empty || other_block.is_transparent)
@@ -141,21 +141,21 @@ void LightingRenderMode::draw(RGBAImage& image, const BlockImage& block_image,
 		const mc::BlockPos& pos, uint16_t id, const RenderRotation& rotation) {
 
 	CORNERS_LEFT = FaceCorners(CornerNeighbors(
-		/*mc::DIR_WEST + mc::DIR_NORTH + mc::DIR_TOP*/ rotation.rotate(mc::BlockPos(-1, -1, 1)),
-		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockPos(0, 1, 0)),
-		/*mc::DIR_BOTTOM*/ rotation.rotate(mc::BlockPos(0, 0, -1))));
+		/*mc::DIR_WEST + mc::DIR_NORTH + mc::DIR_TOP*/ rotation.rotate(mc::BlockDir(-1, -1, 1)),
+		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockDir(0, 1, 0)),
+		/*mc::DIR_BOTTOM*/ rotation.rotate(mc::BlockDir(0, 0, -1))));
 	CORNERS_RIGHT = FaceCorners(CornerNeighbors(
-		/*mc::DIR_SOUTH + mc::DIR_WEST + mc::DIR_TOP*/ rotation.rotate(mc::BlockPos(-1, 1, 1)),
-		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockPos(1, 0, 0)),
-		/*mc::DIR_BOTTOM*/ rotation.rotate(mc::BlockPos(0, 0, -1))));
+		/*mc::DIR_SOUTH + mc::DIR_WEST + mc::DIR_TOP*/ rotation.rotate(mc::BlockDir(-1, 1, 1)),
+		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockDir(1, 0, 0)),
+		/*mc::DIR_BOTTOM*/ rotation.rotate(mc::BlockDir(0, 0, -1))));
 	CORNERS_TOP = FaceCorners(CornerNeighbors(
-		/*mc::DIR_TOP + mc::DIR_NORTH + mc::DIR_WEST*/ rotation.rotate(mc::BlockPos(-1, -1, 1)),
-		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockPos(1, 0, 0)),
-		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockPos(0, 1, 0))));
+		/*mc::DIR_TOP + mc::DIR_NORTH + mc::DIR_WEST*/ rotation.rotate(mc::BlockDir(-1, -1, 1)),
+		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockDir(1, 0, 0)),
+		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockDir(0, 1, 0))));
 	CORNERS_BOTTOM = FaceCorners(CornerNeighbors(
-		/*mc::DIR_NORTH + mc::DIR_WEST*/ rotation.rotate(mc::BlockPos(-1, -1, 0)),
-		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockPos(1, 0, 0)),
-		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockPos(0, 1, 0))));
+		/*mc::DIR_NORTH + mc::DIR_WEST*/ rotation.rotate(mc::BlockDir(-1, -1, 0)),
+		/*mc::DIR_EAST*/ rotation.rotate(mc::BlockDir(1, 0, 0)),
+		/*mc::DIR_SOUTH*/ rotation.rotate(mc::BlockDir(0, 1, 0))));
 
 	//void blockImageMultiply(RGBAImage& block, const RGBAImage& uv_mask,
 	//		const CornerValues& factors_left, const CornerValues& factors_right, const CornerValues& factors_up);
@@ -267,7 +267,7 @@ void LightingRenderMode::doSmoothLight(RGBAImage& image, const BlockImage& block
 	std::array<bool, 3> side_mask = block_image.side_mask;
 	bool under_water[3] = {false, false, false};
 
-	mc::BlockPos dirs[3] = {rotation.getWest(), rotation.getSouth(), rotation.getTop()};
+	mc::BlockDir dirs[3] = {rotation.getWest(), rotation.getSouth(), rotation.getTop()};
 	for (int i = 0; i < 3; i++) {
 		if (side_mask[i]) {
 			const BlockImage& block = block_images->getBlockImage(getBlock(pos + dirs[i]).id);

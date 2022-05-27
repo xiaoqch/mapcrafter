@@ -36,12 +36,14 @@
 namespace mapcrafter {
 namespace mc {
 
+class BlockDir;
+
 /**
  * @brief RegionPos holds the position of a region in absolute coordinate in the world. The X and Z values are
  * used to set the filename, therefore are absolute world coordinates divided by 512 (16*32).
  */
 class RegionPos {
-public:
+  public:
 	int x, z;
 
 	RegionPos();
@@ -57,11 +59,11 @@ public:
 class BlockPos;
 
 /**
- * @brief ChunkPos points to a position in a chunk. Therefore X and Z are never bigger than 15 or lower than 0.
-   * However Y is still an absolute world Y as chunkas are not delimited in height. (yet...)
+ * @brief ChunkPos points to a position in a chunk. Therefore X and Z are never bigger than 15 or lower than
+ * 0. However Y is still an absolute world Y as chunkas are not delimited in height. (yet...)
  */
 class ChunkPos {
-public:
+  public:
 	int x, z;
 
 	ChunkPos();
@@ -84,7 +86,7 @@ class LocalBlockPos;
  * @brief BlockPos are absolute coordinate of a block in the world.
  */
 class BlockPos {
-public:
+  public:
 	int x, z, y;
 
 	BlockPos();
@@ -93,20 +95,44 @@ public:
 	bool operator==(const BlockPos& other) const;
 	bool operator!=(const BlockPos& other) const;
 
-	BlockPos& operator+=(const BlockPos& p);
-	BlockPos& operator-=(const BlockPos& p);
-	BlockPos operator+(const BlockPos& p2) const;
-	BlockPos operator-(const BlockPos& p2) const;
+	BlockDir  operator-(const BlockPos& p2) const;
+
+	BlockPos& operator+=(const BlockDir& dir);
+	BlockPos& operator-=(const BlockDir& dir);
+	BlockPos  operator+(const BlockDir& dir) const;
+	BlockPos  operator-(const BlockDir& dir) const;
 };
 
-extern const mc::BlockPos DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST, DIR_TOP, DIR_BOTTOM;
+/**
+ * @brief BlockDir are absolute direction of block size unit in the world.
+ */
+class BlockDir {
+  public:
+	int x, z, y;
+
+	BlockDir();
+	BlockDir(int x, int z, int y);
+
+	bool operator==(const BlockDir& other) const;
+	bool operator!=(const BlockDir& other) const;
+
+	BlockDir& operator+=(const BlockDir& p);
+	BlockDir& operator-=(const BlockDir& p);
+	BlockDir  operator+(const BlockDir& p2) const;
+	BlockDir  operator-(const BlockDir& p2) const;
+
+	BlockPos operator+(const BlockPos& pos) const;
+	BlockPos operator-(const BlockPos& pos) const;
+};
+
+extern const mc::BlockDir DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST, DIR_TOP, DIR_BOTTOM;
 
 /**
  * @brief LocalBlockPos provides local coordinates inside a ChunkSection, which is a 16x16x16 world section.
  * All 3 coordinates are between 0 and 15 included.
  */
 class LocalBlockPos {
-public:
+  public:
 	int x, z, y;
 
 	LocalBlockPos();
@@ -121,7 +147,7 @@ std::ostream& operator<<(std::ostream& stream, const RegionPos& region);
 std::ostream& operator<<(std::ostream& stream, const ChunkPos& chunk);
 std::ostream& operator<<(std::ostream& stream, const LocalBlockPos& block);
 
-}
-}
+}  // namespace mc
+}  // namespace mapcrafter
 
 #endif

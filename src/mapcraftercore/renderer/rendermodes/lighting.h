@@ -41,16 +41,16 @@ namespace renderer {
  * The neighbors are defined by specifying the first position and two other directions
  * where the other neighbors are.
  *
- * The addPos-method is used to move all these neighbors in a specified direction.
+ * The addDir-method is used to move all these neighbors in a specified direction.
  */
 struct CornerNeighbors {
-	mc::BlockPos pos1, pos2, pos3, pos4;
-	mc::BlockPos dir1, dir2;
+	mc::BlockDir pos1, pos2, pos3, pos4;
+	mc::BlockDir dir1, dir2;
 
 	CornerNeighbors();
-	CornerNeighbors(const mc::BlockPos& pos1, const mc::BlockPos& dir1, const mc::BlockPos& dir2);
+	CornerNeighbors(const mc::BlockDir& pos1, const mc::BlockDir& dir1, const mc::BlockDir& dir2);
 
-	CornerNeighbors addPos(const mc::BlockPos& pos) const;
+	CornerNeighbors addDir(const mc::BlockDir& pos) const;
 };
 
 /**

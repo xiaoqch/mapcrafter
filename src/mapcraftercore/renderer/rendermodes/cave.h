@@ -31,7 +31,8 @@ namespace renderer {
 
 class CaveRenderMode : public BaseRenderMode {
 public:
-	CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs, const RenderRotation& rotation);
+	CaveRenderMode(const std::vector<mc::BlockDir>& hidden_dirs, const RenderRotation& rotation);
+	// CaveRenderMode(const std::vector<mc::BlockPos>& hidden_dirs, const RenderRotation& rotation);
 	virtual ~CaveRenderMode();
 
 	virtual bool isHidden(const mc::BlockPos& pos, const BlockImage& block_image);
@@ -43,7 +44,7 @@ protected:
 	// for example, for the isometric render view this would be: south, west and top
 	// (because you are looking from the south-west-top at the map and don't want your
 	// view into the cave covered by the southern, western, and top walls)
-	std::vector<mc::BlockPos> hidden_dirs;
+	std::vector<mc::BlockDir> hidden_dirs;
 	const RenderRotation& rotation;
 };
 

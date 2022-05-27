@@ -66,7 +66,7 @@ void TopdownTileRenderer::renderTopBlocks(const TilePos& tile_pos, boost::contai
 				for (int z = 0; z < 16; z++) {
 					int px = dx + x * block_size;
 					int py = dz + z * block_size;
-					renderBlocks(px, py, blockpos + mc::BlockPos(x, z, 0), mc::BlockPos(0, 0, -1), tile_images);
+					renderBlocks(px, py, blockpos + mc::BlockDir(x, z, 0), mc::BlockDir(0, 0, -1), tile_images);
 				}
 			}
 		}

@@ -31,3 +31,4 @@ start-dev.sh
 start-nginx.sh
 *.dylib
 src/data/blocks
+.gitlab-ci.yml

@@ -133,7 +133,7 @@ int TileRenderer::getTileHeight() const {
 	return getTileSize();
 }
 
-void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockPos& dir, boost::container::vector<TileImage>& tile_images) {
+void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockDir& dir, boost::container::vector<TileImage>& tile_images) {
 
 	for (; top.y >= mc::CHUNK_LOWEST*16 ; top += dir) {
 		// get current chunk position
@@ -262,7 +262,7 @@ void TileRenderer::renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockP
 			}
 
 			if (block_image->shadow_edges > 0) {
-				auto shadow_edge = [this, top](const mc::BlockPos& dir) {
+				auto shadow_edge = [this, top](const mc::BlockDir& dir) {
 					const BlockImage& b = block_images->getBlockImage(getBlock(top + dir).id);
 					return b.shadow_edges == 0;
 				};
@@ -393,7 +393,7 @@ uint32_t TileRenderer::getBiomeColor(const mc::BlockPos& pos, const BlockImage& 
 
 	for (int dx = -radius; dx <= radius; dx++) {
 		for (int dz = -radius; dz <= radius; dz++) {
-			mc::BlockPos other = pos + mc::BlockPos(dx, dz, 0);
+			mc::BlockPos other = pos + mc::BlockDir(dx, dz, 0);
 			mc::ChunkPos chunk_pos(other);
 
 			uint16_t biome_id;

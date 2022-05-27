@@ -78,7 +78,7 @@ protected:
 	// void sortTiles(boost::container::vector<TileImage>& tile_images) const;
 	typedef bool cmpBlockPos(const TileImage &, const TileImage &);
 	cmpBlockPos* getTileComparator() const;
-	void renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockPos& dir, boost::container::vector<TileImage>& tile_images);
+	void renderBlocks(int x, int y, mc::BlockPos top, const mc::BlockDir& dir, boost::container::vector<TileImage>& tile_images);
 	virtual void renderTopBlocks(const TilePos& tile_pos, boost::container::vector<TileImage>& tile_images) {}
 
 	mc::Block getBlock(const mc::BlockPos& pos, int get = mc::GET_ID);

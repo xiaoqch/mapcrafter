@@ -146,7 +146,7 @@ void TileTopBlockIterator::next() {
 		// check if the current top block is out of the tile
 		if (pos2Col(current) < min_col) {
 			// then move it by a few blocks to bottom right
-			current += render_view->getRotation().rotate(mc::BlockPos(0, min_col - pos2Col(current) - 1, 0));
+			current += render_view->getRotation().rotate(mc::BlockDir(0, min_col - pos2Col(current) - 1, 0));
 		}
 
 		// Recalculate the row and col
@@ -185,7 +185,7 @@ int NewIsometricTileRenderer::getTileSize() const {
 
 void NewIsometricTileRenderer::renderTopBlocks(const TilePos& tile_pos, boost::container::vector<TileImage>& tile_images) {
 	int block_size = images->getBlockSize();
-	mc::BlockPos dir = render_view->getRotation().rotate(mc::DIR_NORTH + mc::DIR_EAST + mc::DIR_BOTTOM);
+	mc::BlockDir dir = render_view->getRotation().rotate(mc::DIR_NORTH + mc::DIR_EAST + mc::DIR_BOTTOM);
 	for (old::TileTopBlockIterator it(tile_pos, block_size, tile_width, render_view); !it.end(); it.next()) {
 		renderBlocks(it.getDrawX(), it.getDrawY(), it.getCurrentPos(), dir, tile_images);
 	}

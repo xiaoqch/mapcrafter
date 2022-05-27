@@ -77,7 +77,7 @@ void SideTileRenderer::renderTopBlocks(const TilePos& tile_pos, boost::container
 				for (int x = 0; x < 16; x++) {
 					int px = dx + x * block_width;
 					int py = dz + z * block_height / 2 - block_height / 2;
-					renderBlocks(px, py, blockpos + mc::BlockPos(x, z, 0), mc::BlockPos(0, -1, -1), tile_images);
+					renderBlocks(px, py, blockpos + mc::BlockDir(x, z, 0), mc::BlockDir(0, -1, -1), tile_images);
 				}
 			}
 		}
