@@ -1,10 +1,13 @@
 # Mapcrafter version history
 
-**v.3.1 WIP**
+**v.3.1.328**
+  * 1.19-pre1 blocks included
+  * Blocks updated with a lot of texture mapping issues resolved in a Blockcrafter update
 
+**v.3.1.323**
 * Support for 1.18.x
   * Dockerfile build fixed
-  * Entity cafile not saved in worl folder anymore. World folder can now be mounted as read only.
+  * Entity cache file not saved in world folder anymore. World folder can now be mounted as read only.
   * Breaking change, doesn't support the old chunk format anymore (sorry, :( no time to develop a dynamic convertion of old Minecraft file format)
   * Chunks height supoprted from -64 to 319 included.
   * Support new biome palette

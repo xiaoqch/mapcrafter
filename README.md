@@ -1,7 +1,8 @@
 # Mapcrafter [![Build Status](https://travis-ci.org/mapcrafter/mapcrafter.svg?branch=master)](https://travis-ci.org/mapcrafter/mapcrafter)
 
-by Moritz Hilscher
-*(modified by Michael Lavaire)*
+by Moritz Hilscher *(modified by Michael Lavaire)*
+
+### <img src="https://logos-download.com/wp-content/uploads/2016/09/Docker_logo.png" width=48 alt="docker">  https://hub.docker.com/r/miclav/mapcrafter
 
 Mapcrafter is a high performance Minecraft map renderer written in C++. It renders
 Minecraft worlds to a bunch of tiles (images) which are viewable as a map in any browser
