@@ -95,13 +95,30 @@ bool Chunk::readNBT(mc::BlockStateRegistry& block_registry, const char* data, si
 	}
 
 	// then find x/z pos of the chunk
-	if (!nbt.hasTag<nbt::TagInt>("xPos") || !nbt.hasTag<nbt::TagInt>("yPos") || !nbt.hasTag<nbt::TagInt>("zPos")) {
-		LOG(ERROR) << "Corrupt chunk: No x/z position found!";
+	if (nbt.hasTag<nbt::TagInt>("xPos") && nbt.hasTag<nbt::TagInt>("zPos")) {
+		chunkpos = ChunkPos(nbt.findTag<nbt::TagInt>("xPos").payload,
+							nbt.findTag<nbt::TagInt>("zPos").payload);
+	} else {
+		if(!nbt.hasTag<nbt::TagCompound>("Level")) {
+			LOG(ERROR) << "Corrupt chunk: No x/z pos or Level tag found!";
+			return false;
+		}
+
+		nbt::TagCompound level = nbt.findTag<nbt::TagCompound>("Level");
+		if(!level.hasTag<nbt::TagInt>("xPos") || !level.hasTag<nbt::TagInt>("zPos")) {
+			LOG(ERROR) << "Corrupt chunk: No x/z pos tag found in Level tag!";
+			return false;
+		}
+		
+		chunkpos = ChunkPos(level.findTag<nbt::TagInt>("xPos").payload,
+							level.findTag<nbt::TagInt>("zPos").payload);
+	}
+
+	if (!nbt.hasTag<nbt::TagInt>("yPos")) {
+		LOG(ERROR) << "Corrupt chunk: No y pos tag found!";
 		return false;
 	}
 
-	chunkpos = ChunkPos(nbt.findTag<nbt::TagInt>("xPos").payload,
-	                             nbt.findTag<nbt::TagInt>("zPos").payload);
 	int chunk_lowest = nbt.findTag<nbt::TagInt>("yPos").payload;
 
 	// now we have the original chunk position:
